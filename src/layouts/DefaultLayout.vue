@@ -1,4 +1,3 @@
-<!-- src/layout/DefaultLayout.vue -->
 <template>
   <div class="default-layout">
     <!-- 顶部栏 -->
@@ -9,7 +8,7 @@
       <SideBar class="sidebar" :collapsed="collapsed" />
 
       <!-- 内容区域 -->
-      <div class="content">
+      <div class="content" :class="{ collapsed }">
         <router-view />
       </div>
     </div>
@@ -17,17 +16,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import AppBar from '@/components/AppBar.vue';
-import SideBar from '@/components/SideBar.vue';
+import { ref } from 'vue'
+import AppBar from '@/components/AppBar.vue'
+import SideBar from '@/components/SideBar.vue'
 
-// 控制侧边栏是否折叠
-const collapsed = ref(false);
+const collapsed = ref(false)
 
-// 切换折叠状态
 const toggleSidebar = () => {
-  collapsed.value = !collapsed.value;
-};
+  collapsed.value = !collapsed.value
+}
 </script>
 
 <style scoped>
@@ -41,6 +38,7 @@ const toggleSidebar = () => {
   display: flex;
   flex: 1;
   overflow: hidden;
+  margin-top: 60px; /* 顶部栏高度 */
 }
 
 .sidebar {
@@ -53,5 +51,10 @@ const toggleSidebar = () => {
   padding: 20px;
   overflow-y: auto;
   background-color: #f5f5f5;
+  transition: margin-left 0.3s ease;
+}
+
+.content.collapsed {
+  margin-left: -136px; /* = 原始宽度200 - 折叠宽度64 */
 }
 </style>

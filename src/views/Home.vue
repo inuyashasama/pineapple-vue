@@ -1,27 +1,5 @@
 <template>
   <div class="home-container">
-    <!-- 顶部导航栏 -->
-    <el-header class="header">
-      <div class="logo">🍍 Pineapple Blog</div>
-      <div class="nav-right">
-        <el-button v-if="!isLogin" @click="goToLogin" type="primary" size="small">
-          登录
-        </el-button>
-        <el-button v-if="!isLogin" @click="goToRegister" size="small">
-          注册
-        </el-button>
-        <el-dropdown v-else @command="handleLogout">
-          <span class="user-dropdown">
-            {{ userInfo.username }} <el-icon><arrow-down /></el-icon>
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="logout">退出登录</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-    </el-header>
 
     <!-- 主体内容 -->
     <el-main class="main">
@@ -60,6 +38,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getArticles } from '@/api'
 import { Page, Article } from '@/types/response'
+import { ElMessage } from 'element-plus'
 
 // 路由
 const router = useRouter()

@@ -33,7 +33,7 @@
 
         <div class="link">
           没有账号？
-          <router-link to="/register">去注册</router-link>
+          <router-link to="/auth/register">去注册</router-link>
         </div>
       </el-form>
     </el-card>
@@ -94,7 +94,7 @@ const onSubmit = async () => {
       localStorage.setItem('token', token)
       ElMessage.success('登录成功！')
 
-      await router.push('/index')
+      await router.push('/')
     } catch (err) {
       // 错误已在拦截器中处理
     } finally {

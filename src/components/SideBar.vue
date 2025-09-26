@@ -1,74 +1,90 @@
-<!-- src/components/SideBar.vue -->
 <template>
-  <div class="sidebar-container" :class="{ 'collapsed': collapsed }">
-    <!-- logo -->
+  <div :class="['sidebar', { collapsed }]">
     <div class="logo">
-      <span>{{ collapsed ? 'P' : 'Pine Admin' }}</span>
+      <span v-if="!collapsed">🍍 Pineapple</span>
+      <span v-else>🍍</span>
     </div>
-
-    <!-- 菜单 -->
-    <el-menu
-      :default-active="$route.path"
-      class="menu"
-      :collapse="collapsed"
-      :collapse-transition="false"
-      background-color="#304156"
-      text-color="#bfcbd9"
-      active-text-color="#409eff"
-      router
-    >
-      <el-menu-item index="/home">
-        <el-icon><House /></el-icon>
-        <template #title>首页</template>
-      </el-menu-item>
-
-      <el-menu-item index="/articles">
-        <el-icon><Document /></el-icon>
-        <template #title>文章管理</template>
-      </el-menu-item>
-
-      <el-menu-item index="/settings">
-        <el-icon><Setting /></el-icon>
-        <template #title>系统设置</template>
-      </el-menu-item>
-    </el-menu>
+    <ul class="menu">
+      <li
+        v-for="item in menu"
+        :key="item.path"
+        :class="{ active: $route.path === item.path }"
+        @click="go(item.path)"
+      >
+        <i :class="item.icon"></i>
+        <span v-if="!collapsed">{{ item.title }}</span>
+      </li>
+    </ul>
+    <div class="collapse-btn" @click="$emit('toggle')">
+      <i :class="collapsed ? 'icon-expand' : 'icon-collapse'"></i>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  collapsed: boolean
-}>();
+import { useRouter } from "vue-router";
+import { computed } from "vue";
 
-// 图标（Element Plus）
-import { House, Document, Setting } from '@element-plus/icons-vue';
+defineProps<{ collapsed: boolean }>();
+
+const router = useRouter();
+const menu = computed(() => [
+  { path: "/", title: "首页", icon: "icon-home" },
+  { path: "/dashboard", title: "仪表盘", icon: "icon-dashboard" },
+]);
+
+const go = (path: string) => {
+  router.push(path);
+};
 </script>
 
 <style scoped>
-.sidebar-container {
+.sidebar {
+  background: #001529;
+  color: #fff;
   width: 200px;
-  background-color: #304156;
-  height: 100%;
-  overflow-y: auto;
-  transition: width 0.3s ease;
+  transition: width 0.2s;
+  display: flex;
+  flex-direction: column;
 }
-
-.sidebar-container.collapsed {
+.sidebar.collapsed {
   width: 64px;
 }
-
 .logo {
-  height: 50px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  color: white;
-  font-size: 16px;
-  background-color: #2b3a4c;
+  font-size: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
-
 .menu {
-  border: none;
+  flex: 1;
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+.menu li {
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+}
+.menu li:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+.menu li.active {
+  background: rgba(255, 255, 255, 0.25);
+}
+.collapse-btn {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
 }
 </style>

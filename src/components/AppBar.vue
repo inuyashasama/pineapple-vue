@@ -1,8 +1,11 @@
-<!-- src/components/AppBar.vue -->
 <template>
   <header class="app-bar">
     <!-- 折叠按钮 -->
-    <div class="toggle-btn" @click="handleToggle">
+    <div
+      class="toggle-btn"
+      :class="{ active: collapsed }"
+      @click="handleToggle"
+    >
       <span class="bar"></span>
       <span class="bar"></span>
       <span class="bar"></span>
@@ -17,14 +20,17 @@
 </template>
 
 <script setup lang="ts">
-// 定义 emit 事件
+const props = defineProps<{
+  collapsed: boolean
+}>()
+
 const emit = defineEmits<{
   (e: 'toggle-sidebar'): void
-}>();
+}>()
 
 const handleToggle = () => {
-  emit('toggle-sidebar');
-};
+  emit('toggle-sidebar')
+}
 </script>
 
 <style scoped>
@@ -45,6 +51,12 @@ const handleToggle = () => {
   cursor: pointer;
   width: 24px;
   height: 24px;
+  justify-content: center;
+  transition: transform 0.3s;
+}
+
+.toggle-btn.active {
+  transform: rotate(90deg);
 }
 
 .bar {

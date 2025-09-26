@@ -43,7 +43,7 @@
 
         <div class="link">
           已有账号？
-          <router-link to="/login">去登录</router-link>
+          <router-link to="/auth/login">去登录</router-link>
         </div>
       </el-form>
     </el-card>
@@ -106,7 +106,7 @@ const onSubmit = async () => {
       ElMessage.success('注册成功！')
 
       // 注册成功后跳转到登录页
-      await router.push('/login')
+      await router.push('/auth/login')
     } catch (err: any) {
       ElMessage.error(err.response?.data?.message || '注册失败')
     } finally {
