@@ -30,7 +30,7 @@ defineProps<{ collapsed: boolean }>();
 const router = useRouter();
 const menu = computed(() => [
   { path: "/", title: "首页", icon: "icon-home" },
-  { path: "/dashboard", title: "仪表盘", icon: "icon-dashboard" },
+  { path: "/documents", title: "文档编辑", icon: "icon-edit" },
 ]);
 
 const go = (path: string) => {

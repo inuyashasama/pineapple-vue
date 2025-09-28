@@ -12,7 +12,11 @@ const routes: Array<RouteRecordRaw> = [
         name: "Home",
         component: () => import("@/views/Home.vue"),
       },
-      // 其他业务页面继续在这里加
+      {
+        path: "documents",
+        name: "Documents",
+        component: () => import("@/views/DocumentEditor.vue"),
+      },
     ],
   },
   {
