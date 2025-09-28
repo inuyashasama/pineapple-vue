@@ -50,7 +50,7 @@ request.interceptors.response.use(
   },
   (error) => {
 
-    const { response, message } = error;
+    const { response } = error;
 
     // 处理 HTTP 错误
     if (response) {
