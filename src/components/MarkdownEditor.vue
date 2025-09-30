@@ -53,6 +53,8 @@ import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getMarkdown, saveMarkdown } from '@/api/markdown'
 import { MdEditor } from 'md-editor-v3'
+import { useRoute } from 'vue-router'
+import { onMounted } from 'vue'
 import 'md-editor-v3/lib/style.css'
 import 'katex/dist/katex.min.css'
 import 'highlight.js/styles/github.css'
@@ -66,12 +68,16 @@ const password = ref('')
 const isDark = ref(false)
 const fileName = ref('')
 
+const route = useRoute()
+
+
 /** 下载 Markdown */
 const downloadMd = () => {
   const blob = new Blob([text.value], { type: 'text/markdown' })
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
-  link.download = 'document.md'
+  const downloadName = fileName.value || 'document'
+  link.download = downloadName + '.md'
   link.click()
   URL.revokeObjectURL(link.href)
 }
@@ -126,11 +132,17 @@ const loadFromBackend = async () => {
     }
     const res = await getMarkdown(fileName.value)
     text.value = res?.content || ''
-    ElMessage.success('加载成功')
   } catch (err) {
     ElMessage.error('加载失败')
   }
 }
+
+onMounted(() => {
+  fileName.value = route.query.name
+  if (fileName.value) {
+    loadFromBackend()
+  }
+})
 
 </script>
 

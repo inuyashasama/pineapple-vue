@@ -88,11 +88,12 @@ const onSubmit = async () => {
     loading.value = true
     try {
       const res = await login(form.value.username, form.value.password) as any
-      // res 就是后端返回的 data（即 { token: "xxx" }）
+      // res 就是后端返回的 data（即 { token: "xxx" }）      
       const token = res.token
 
       localStorage.setItem('token', token)
       ElMessage.success('登录成功！')
+      localStorage.setItem('username', form.value.username)
 
       await router.push('/')
     } catch (err) {
@@ -120,7 +121,7 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-image: -webkit-image-set(url(../assets/bg.jpg));
 }
 
 .auth-form {

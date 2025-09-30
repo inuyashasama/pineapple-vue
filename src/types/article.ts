@@ -1,8 +1,7 @@
 export interface Article {
   id?: number
-  title: string
+  name: string
   content: string
-  userId?: number
   createTime?: string
   updateTime?: string
 }
