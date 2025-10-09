@@ -119,7 +119,7 @@ const saveToBackend = async () => {
     await saveMarkdown({ name: fileName.value, content: text.value, password: password.value, encrypted: false })
     ElMessage.success('保存成功')
   } catch (err) {
-    ElMessage.error('保存失败')
+    ElMessage.error('保存失败' + err?.message || '')
   }
 }
 

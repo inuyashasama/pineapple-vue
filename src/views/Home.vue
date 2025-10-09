@@ -11,7 +11,7 @@
               {{ article.name }}
             </h3>
             <p class="article-meta">
-              作者: {{ article.userId }} | 
+              作者: {{ userInfo.username }} | 
               发布时间: {{ article.createTime }}
             </p>
             <p class="article-excerpt">

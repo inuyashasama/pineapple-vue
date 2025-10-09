@@ -1,7 +1,7 @@
 // src/utils/request.ts
-import axios, { AxiosRequestConfig } from 'axios';
+import axios, { type AxiosRequestConfig } from 'axios';
 import { ElMessage } from 'element-plus';
-import { BASE_URL, TIMEOUT } from '@/config/config';
+import { BASE_URL, TIMEOUT } from '../config/config';
 import router from '../router';
 
 
@@ -51,7 +51,8 @@ request.interceptors.response.use(
   (error) => {
 
     const { response } = error;
-
+    console.log("error：" + response.status);
+    
     // 处理 HTTP 错误
     if (response) {
       const { status, data } = response;
@@ -60,11 +61,7 @@ request.interceptors.response.use(
       let errorMsg = data?.message || data?.error || '请求异常';
 
       if (status === 401) {
-        // 清除本地 token
-        localStorage.removeItem('token');
-        // 可选：跳转登录页
-        errorMsg = '登录已过期，请重新登录';
-        router.push('/auth/login');
+        errorMsg = '接口请求错误';
       } else if (status === 403) {
         errorMsg = '无权限访问';
       } else if (status === 404) {
