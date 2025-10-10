@@ -6,6 +6,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     component: MainLayout,
+    meta: { requiresAuth: true },
     children: [
       {
         path: "",
@@ -47,7 +48,7 @@ router.beforeEach((to, from, next) => {
   const token = localStorage.getItem("token");
 
   // 如果路由需要认证（MainLayout 内的页面）
-  if (to.matched.some(record => record.component === MainLayout)) {
+  if (to.matched.some(record => record.meta.requiresAuth)) {
     if (token) {
       next();
     } else {
