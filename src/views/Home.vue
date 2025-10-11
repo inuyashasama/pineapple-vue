@@ -1,8 +1,12 @@
 <template>
   <div class="home-container">
+
+    <!-- 添加签到组件 -->
+    <SignIn ref="signInRef" />
     <!-- 主体内容 -->
     <el-main class="main">
       <div class="content-wrapper">
+        <!-- 👇 新增：签到组件 -->
         <!-- 文章内容区域 -->
         <div class="articles-content">
           <h2>文章列表</h2>
@@ -11,36 +15,30 @@
               {{ article.name }}
             </h3>
             <p class="article-meta">
-              作者: {{ userInfo.username }} | 
+              作者: {{ userInfo.username }} |
               发布时间: {{ article.createTime }}
             </p>
             <p class="article-excerpt">
               {{ article.content?.substring(0, 100) }}...
             </p>
           </div>
-          
+
           <!-- 分页 -->
-          <el-pagination
-            v-if="total > 0"
-            class="pagination"
-            :current-page="currentPage"
-            :page-size="pageSize"
-            :total="total"
-            layout="prev, pager, next, total"
-            @current-change="loadArticles"
-          />
+          <el-pagination v-if="total > 0" class="pagination" :current-page="currentPage" :page-size="pageSize"
+            :total="total" layout="prev, pager, next, total" @current-change="loadArticles" />
         </div>
-        
+
         <!-- 右侧文章列表 -->
         <div class="sidebar">
+          <div class="sign-in-trigger">
+            <el-button type="primary" @click="openSignIn" size="large">
+              🎁 每日签到
+            </el-button>
+          </div>
           <h3>最新文章</h3>
           <ul class="sidebar-article-list">
-            <li 
-              v-for="article in articles" 
-              :key="article.id" 
-              @click="goToDetail(article.name)"
-              class="sidebar-article-item"
-            >
+            <li v-for="article in articles" :key="article.id" @click="goToDetail(article.name)"
+              class="sidebar-article-item">
               <div class="sidebar-article-title">{{ article.name }}</div>
               <div class="sidebar-article-meta">
                 {{ article.createTime }}
@@ -58,6 +56,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getArticles } from '@/api/markdown'
 import { Article } from '@/types/article'
+import SignIn from '@/components/SignIn.vue'
 
 // 路由
 const router = useRouter()
@@ -95,7 +94,7 @@ const loadArticles = async (page = 1) => {
 
 // 跳转详情
 const goToDetail = (name: string) => {
-    router.push({
+  router.push({
     name: 'Documents',
     query: { name: name }
   })
@@ -109,9 +108,41 @@ onMounted(async () => {
   }
   await loadArticles()
 })
+// 获取子组件实例
+const signInRef = ref<InstanceType<typeof SignIn> | null>(null)
+
+// 打开签到弹窗
+const openSignIn = () => {
+  console.log(signInRef.value);
+
+  if (signInRef.value) {
+    signInRef.value.open()
+  }
+}
 </script>
 
 <style scoped>
+.home-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.sign-in-trigger {
+  text-align: center;
+  padding: 20px 0;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 200px;
+  margin: 0 auto;
+  border-radius: 8px;
+}
+
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
 .home-container {
   min-height: 100vh;
   background-color: #f5f5f5;
@@ -122,7 +153,7 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 0 20px;
 }
 
@@ -153,7 +184,7 @@ onMounted(async () => {
   background: #fff;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar {
@@ -161,7 +192,7 @@ onMounted(async () => {
   background: #fff;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   align-self: flex-start;
 }
 
@@ -214,6 +245,7 @@ onMounted(async () => {
   margin: 0 0 10px;
   cursor: pointer;
 }
+
 .article-title:hover {
   color: #ff6f61;
 }

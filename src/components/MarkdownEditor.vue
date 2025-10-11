@@ -6,7 +6,7 @@
           <div class="flex justify-between items-center">
             <h2 class="text-xl font-bold flex items-center gap-2">
               <i class="fa fa-pencil-square text-indigo-500"></i>
-              Markdown 编辑器
+              {{ props.title }}
             </h2>
             <el-switch v-model="isDark" active-text="暗黑模式" inactive-text="明亮模式" />
           </div>
@@ -70,7 +70,12 @@ const fileName = ref('')
 
 const route = useRoute()
 
-
+const props = defineProps({
+  title: {
+    type: String,
+    default: 'Markdown Editor'
+  }
+})
 /** 下载 Markdown */
 const downloadMd = () => {
   const blob = new Blob([text.value], { type: 'text/markdown' })

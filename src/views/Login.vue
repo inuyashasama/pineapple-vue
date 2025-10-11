@@ -94,6 +94,7 @@ const onSubmit = async () => {
       localStorage.setItem('token', token)
       ElMessage.success('登录成功！')
       localStorage.setItem('username', form.value.username)
+      localStorage.setItem('userId', res.id)
 
       await router.push('/')
     } catch (err) {

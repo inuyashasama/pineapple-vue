@@ -2,8 +2,6 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 import { ElMessage } from 'element-plus';
 import { BASE_URL, TIMEOUT } from '../config/config';
-import router from '../router';
-
 
 // 默认错误处理
 const showError = (msg: string) => {
