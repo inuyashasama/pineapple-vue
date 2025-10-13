@@ -45,6 +45,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, FormInstance } from 'element-plus'
 import { login } from '@/api/auth'
+import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
 
 interface LoginParams {
   username: string
@@ -91,10 +92,10 @@ const onSubmit = async () => {
       // res 就是后端返回的 data（即 { token: "xxx" }）      
       const token = res.token
 
-      localStorage.setItem('token', token)
+      LocalStorageUtil.setWithExpire('token', token, 3 * 60 * 60 * 1000) // 2 小时过期
       ElMessage.success('登录成功！')
-      localStorage.setItem('username', form.value.username)
-      localStorage.setItem('userId', res.id)
+      LocalStorageUtil.setWithExpire('username', form.value.username, 3 * 60 * 60 * 1000)
+      LocalStorageUtil.setWithExpire('userId', res.id, 3 * 60 * 60 * 1000)
 
       await router.push('/')
     } catch (err) {

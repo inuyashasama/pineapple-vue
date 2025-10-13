@@ -14,3 +14,11 @@ export const signIn = (data: {
 }) => {
   return request.post('/api/user-point/earn', data)
 }
+
+export const getSignStatus = (userId: number) => {
+  return request.get(`/api/user-point/getSignStatus/${userId}`)
+}
+
+export const getUserPointsHistory = (userId: number) => {
+  return request.get(`/api/user-point/getUserPointsHistory/${userId}`)
+}

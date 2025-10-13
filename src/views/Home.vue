@@ -57,12 +57,13 @@ import { useRouter } from 'vue-router'
 import { getArticles } from '@/api/markdown'
 import { Article } from '@/types/article'
 import SignIn from '@/components/SignIn.vue'
+import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
 
 // 路由
 const router = useRouter()
 
 // 登录状态
-const isLogin = !!localStorage.getItem('token')
+const isLogin = !!LocalStorageUtil.get('token')
 const userInfo = ref<{ username: string }>({ username: '用户' })
 
 // 文章列表
@@ -74,9 +75,9 @@ const pageSize = ref(10)
 // 获取用户信息（可后续优化到 Pinia）
 const fetchProfile = async () => {
   // 这里先简单处理，后续可调用 getProfile()
-  const token = localStorage.getItem('token')
+  const token = LocalStorageUtil.get('token')
   if (token) {
-    userInfo.value.username = localStorage.getItem('username') || '用户'
+    userInfo.value.username = LocalStorageUtil.get('username') || '用户'
   }
 }
 

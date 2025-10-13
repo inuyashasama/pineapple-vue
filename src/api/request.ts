@@ -2,6 +2,7 @@
 import axios, { type AxiosRequestConfig } from 'axios';
 import { ElMessage } from 'element-plus';
 import { BASE_URL, TIMEOUT } from '../config/config';
+import { LocalStorageUtil } from '@/stroage/LocalStorageUtil';
 
 // 默认错误处理
 const showError = (msg: string) => {
@@ -22,7 +23,7 @@ const request = axios.create({
 request.interceptors.request.use(
   config => {
     // 可添加 token    
-    const token = localStorage.getItem('token');
+    const token = LocalStorageUtil.get('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

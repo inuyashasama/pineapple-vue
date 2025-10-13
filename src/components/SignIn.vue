@@ -71,10 +71,11 @@
 <script setup lang="ts">
 import { ref, computed, defineExpose } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getPoints, signIn } from '@/api/point'
+import { getSignStatus, signIn, getUserPointsHistory } from '@/api/point'
+import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
 
 // 用户信息
-const userId = localStorage.getItem('userId')
+const userId = LocalStorageUtil.get('userId')
 
 // 弹窗控制
 const visible = ref(false)
@@ -158,16 +159,62 @@ const nextMonth = () => {
 const loadSignInData = async () => {
   if (!userId) return
   try {
-    // 这里需要后端返回签到记录和连续天数
-    // 模拟数据（实际应从接口获取）
-    signedDates.value = ['2025-10-03', '2025-10-04', '2025-10-05']
-    streakDays.value = 3
-    todaySigned.value = signedDates.value.includes(formatDate(today))
+    // 调用获取用户签到历史的接口
+    const res = await getUserPointsHistory(userId) as any
+    
+    // 根据实际后端返回的数据结构调整
+    if (res && Array.isArray(res)) {
+      // 提取签到日期列表（从 createdAt 字段提取日期部分）
+      signedDates.value = res
+        .filter((record: any) => record.reason === 'DAILY_SIGN_IN' && record.changeType === 'EARNED')
+        .map((record: any) => {
+          // 从 "2025-10-11 08:32:58" 格式中提取日期部分 "2025-10-11"
+          return record.createdAt.split(' ')[0];
+        })
+      
+      // 简单计算连续签到天数（需要后端提供或者通过算法计算）
+      // 这里暂时使用简单的计算方式
+      streakDays.value = calculateStreakDays(signedDates.value)
+      
+      // 检查今日是否已签到
+      todaySigned.value = signedDates.value.includes(formatDate(today))
+    }
   } catch (err) {
     ElMessage.error('加载签到数据失败')
+    console.error('获取签到历史失败:', err)
   }
 }
 
+// 添加计算连续签到天数的辅助函数
+const calculateStreakDays = (signedDates: string[]): number => {
+  if (!signedDates.length) return 0
+  
+  const sortedDates = [...signedDates].sort().reverse()
+  let streak = 0
+  let currentDate = new Date()
+  
+  for (const dateStr of sortedDates) {
+    const date = new Date(dateStr)
+    // 设置为同一天（忽略时间）
+    date.setHours(0, 0, 0, 0)
+    currentDate.setHours(0, 0, 0, 0)
+    
+    // 检查是否是今天或昨天
+    const timeDiff = Math.floor((currentDate.getTime() - date.getTime()) / (1000 * 3600 * 24))
+    
+    if (timeDiff === streak) {
+      streak++
+    } else if (timeDiff < streak) {
+      // 已经计算过的日期，跳过
+      continue
+    } else {
+      // 断签，停止计算
+      break
+    }
+  }
+  
+  return streak
+}
 // 签到
 const handleSignIn = async () => {
   if (!userId) {

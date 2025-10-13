@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import MainLayout from "@/layouts/MainLayout.vue";
 import BlankLayout from "@/layouts/BlankLayout.vue";
+import { LocalStorageUtil } from "@/stroage/LocalStorageUtil";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -45,7 +46,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem("token");
+  const token = LocalStorageUtil.get("token");
 
   // 如果路由需要认证（MainLayout 内的页面）
   if (to.matched.some(record => record.meta.requiresAuth)) {
