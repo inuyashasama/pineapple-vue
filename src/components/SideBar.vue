@@ -34,7 +34,7 @@ const menu = computed(() => [
   { path: "/outFitDesigner", title: "搭配设计", icon: "icon-edit" },
 ]);
 
-const go = (path: string) => {W
+const go = (path: string) => {
   router.push(path);
 };
 </script>

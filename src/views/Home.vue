@@ -17,7 +17,7 @@
             <el-tab-pane label="PDF" name="pdf"></el-tab-pane>
           </el-tabs> -->
           <div v-for="article in articles" :key="article.id" class="article-item">
-            <h3 @click="goToDetail(article.name)" class="article-title">
+            <h3 @click="goToDetail(article.name, article.id)" class="article-title">
               {{ article.name }}
             </h3>
             <p class="article-meta">
@@ -43,7 +43,7 @@
           </div>
           <h3>最新文章</h3>
           <ul class="sidebar-article-list">
-            <li v-for="article in articles" :key="article.id" @click="goToDetail(article.name)"
+            <li v-for="article in articles" :key="article.id" @click="goToDetail(article.name, article.id)"
               class="sidebar-article-item">
               <div class="sidebar-article-title">{{ article.name }}</div>
               <div class="sidebar-article-meta">
@@ -128,10 +128,10 @@ const loadArticles = async (page = 1) => {
 }
 
 // 跳转详情
-const goToDetail = (name: string) => {
+const goToDetail = (name: string, id: number) => {
   router.push({
     name: 'Documents',
-    query: { name: name }
+    query: { name: name, id: id }
   })
 }
 

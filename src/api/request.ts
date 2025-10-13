@@ -50,7 +50,7 @@ request.interceptors.response.use(
   (error) => {
 
     const { response } = error;
-    console.log("error：" + response.status);
+    console.log("error：" + response);
     
     // 处理 HTTP 错误
     if (response) {
@@ -60,13 +60,13 @@ request.interceptors.response.use(
       let errorMsg = data?.message || data?.error || '请求异常';
 
       if (status === 401) {
-        errorMsg = '接口请求错误';
+        errorMsg = errorMsg || '接口请求错误';
       } else if (status === 403) {
-        errorMsg = '无权限访问';
+        errorMsg = errorMsg || '无权限访问';
       } else if (status === 404) {
-        errorMsg = '请求地址不存在';
+        errorMsg = errorMsg || '请求地址不存在';
       } else if (status >= 500) {
-        errorMsg = '服务器内部错误';
+        errorMsg = errorMsg || '服务器内部错误';
       }
 
       // 如果不是主动忽略提示

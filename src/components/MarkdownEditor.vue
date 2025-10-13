@@ -67,6 +67,7 @@ const text = ref(`# 欢迎使用在线 Markdown 编辑器
 const password = ref('')
 const isDark = ref(false)
 const fileName = ref('')
+const fileId = ref(null)
 
 const route = useRoute()
 
@@ -121,7 +122,7 @@ const saveToBackend = async () => {
       ElMessage.warning('请输入文件名')
       return
     }
-    await saveMarkdown({ name: fileName.value, content: text.value, password: password.value, encrypted: false })
+    await saveMarkdown({ id: fileId.value, name: fileName.value, content: text.value, password: password.value, encrypted: false })
     ElMessage.success('保存成功')
   } catch (err) {
     ElMessage.error('保存失败' + err?.message || '')
@@ -144,7 +145,8 @@ const loadFromBackend = async () => {
 
 onMounted(() => {
   fileName.value = route.query.name
-  if (fileName.value) {
+  fileId.value = route.query.id
+  if (fileName.value && fileId.value) {
     loadFromBackend()
   }
 })
