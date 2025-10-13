@@ -30,10 +30,11 @@ defineProps<{ collapsed: boolean }>();
 const router = useRouter();
 const menu = computed(() => [
   { path: "/", title: "首页", icon: "icon-home" },
-  { path: "/documents", title: "文档编辑", icon: "icon-edit" },
+  { path: "/documents", title: "文章创作", icon: "icon-edit" },
+  { path: "/outFitDesigner", title: "搭配设计", icon: "icon-edit" },
 ]);
 
-const go = (path: string) => {
+const go = (path: string) => {W
   router.push(path);
 };
 </script>

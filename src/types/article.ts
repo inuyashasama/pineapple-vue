@@ -4,4 +4,5 @@ export interface Article {
   content: string
   createTime?: string
   updateTime?: string
+  fileType?: string
 }

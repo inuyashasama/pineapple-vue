@@ -8,6 +8,7 @@ export interface Markdown {
   content: string
   password?: string
   encrypted?: boolean
+  fileType?: string
 }
 
 /** 获取文章 */

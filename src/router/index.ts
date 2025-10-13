@@ -19,6 +19,11 @@ const routes: Array<RouteRecordRaw> = [
         name: "Documents",
         component: () => import("@/views/DocumentEditor.vue"),
       },
+      {
+        path: "outFitDesigner",
+        name: "OutFitDesigner",
+        component: () => import("@/views/OutfitDesigner.vue"),
+      },
     ],
   },
   {

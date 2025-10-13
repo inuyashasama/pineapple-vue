@@ -9,7 +9,13 @@
         <!-- 👇 新增：签到组件 -->
         <!-- 文章内容区域 -->
         <div class="articles-content">
-          <h2>文章列表</h2>
+          <!-- <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+            <el-tab-pane label="全部" name="all"></el-tab-pane>
+            <el-tab-pane label="Markdown" name="md"></el-tab-pane>
+            <el-tab-pane label="文本" name="txt"></el-tab-pane>
+            <el-tab-pane label="Word" name="docx"></el-tab-pane>
+            <el-tab-pane label="PDF" name="pdf"></el-tab-pane>
+          </el-tabs> -->
           <div v-for="article in articles" :key="article.id" class="article-item">
             <h3 @click="goToDetail(article.name)" class="article-title">
               {{ article.name }}
@@ -52,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getArticles } from '@/api/markdown'
 import { Article } from '@/types/article'
@@ -61,6 +67,9 @@ import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
 
 // 路由
 const router = useRouter()
+
+// 添加 tab 相关的响应式数据
+const activeTab = ref('all')
 
 // 登录状态
 const isLogin = !!LocalStorageUtil.get('token')
@@ -71,6 +80,31 @@ const articles = ref<Article[]>([])
 const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
+
+// 根据当前 tab 过滤文章
+// const filteredArticles = computed(() => {
+//   if (activeTab.value === 'all') {
+//     return articles.value
+//   }
+//   return articles.value.filter(article => {
+//     // 假设文章对象中有 fileType 字段，如果没有需要根据文件名后缀判断
+//     if (article.fileType) {
+//       return article.fileType.toLowerCase() === activeTab.value
+//     }
+//     // 根据文件名后缀判断
+//     if (article.name) {
+//       const ext = article.name.split('.').pop()?.toLowerCase()
+//       return ext === activeTab.value
+//     }
+//     return false
+//   })
+// })
+
+// 处理 tab 切换
+const handleTabChange = (tabName: string) => {
+  // 重新加载对应类型的文章
+  loadArticles()
+}
 
 // 获取用户信息（可后续优化到 Pinia）
 const fetchProfile = async () => {
