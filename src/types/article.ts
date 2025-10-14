@@ -1,8 +1,10 @@
 export interface Article {
   id?: number
-  name: string
+  userId?: number
+  title: string
   content: string
   createTime?: string
   updateTime?: string
-  fileType?: string
+  views?: number
+  filetype?: string
 }

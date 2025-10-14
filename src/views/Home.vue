@@ -9,16 +9,9 @@
         <!-- 👇 新增：签到组件 -->
         <!-- 文章内容区域 -->
         <div class="articles-content">
-          <!-- <el-tabs v-model="activeTab" @tab-change="handleTabChange">
-            <el-tab-pane label="全部" name="all"></el-tab-pane>
-            <el-tab-pane label="Markdown" name="md"></el-tab-pane>
-            <el-tab-pane label="文本" name="txt"></el-tab-pane>
-            <el-tab-pane label="Word" name="docx"></el-tab-pane>
-            <el-tab-pane label="PDF" name="pdf"></el-tab-pane>
-          </el-tabs> -->
           <div v-for="article in articles" :key="article.id" class="article-item">
-            <h3 @click="goToDetail(article.name, article.id)" class="article-title">
-              {{ article.name }}
+            <h3 @click="goToDetail(article.title, article.id, article.filetype)" class="article-title">
+              {{ article.title }}
             </h3>
             <p class="article-meta">
               作者: {{ userInfo.username }} |
@@ -43,9 +36,9 @@
           </div>
           <h3>最新文章</h3>
           <ul class="sidebar-article-list">
-            <li v-for="article in articles" :key="article.id" @click="goToDetail(article.name, article.id)"
+            <li v-for="article in articles" :key="article.id" @click="goToDetail(article.title, article.id, article.fileType)"
               class="sidebar-article-item">
-              <div class="sidebar-article-title">{{ article.name }}</div>
+              <div class="sidebar-article-title">{{ article.title }}</div>
               <div class="sidebar-article-meta">
                 {{ article.createTime }}
               </div>
@@ -60,17 +53,13 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { getArticles } from '@/api/markdown'
+import { getArticles } from '@/api/article'
 import { Article } from '@/types/article'
 import SignIn from '@/components/SignIn.vue'
 import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
 
 // 路由
 const router = useRouter()
-
-// 添加 tab 相关的响应式数据
-const activeTab = ref('all')
-
 // 登录状态
 const isLogin = !!LocalStorageUtil.get('token')
 const userInfo = ref<{ username: string }>({ username: '用户' })
@@ -80,31 +69,6 @@ const articles = ref<Article[]>([])
 const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
-
-// 根据当前 tab 过滤文章
-// const filteredArticles = computed(() => {
-//   if (activeTab.value === 'all') {
-//     return articles.value
-//   }
-//   return articles.value.filter(article => {
-//     // 假设文章对象中有 fileType 字段，如果没有需要根据文件名后缀判断
-//     if (article.fileType) {
-//       return article.fileType.toLowerCase() === activeTab.value
-//     }
-//     // 根据文件名后缀判断
-//     if (article.name) {
-//       const ext = article.name.split('.').pop()?.toLowerCase()
-//       return ext === activeTab.value
-//     }
-//     return false
-//   })
-// })
-
-// 处理 tab 切换
-const handleTabChange = (tabName: string) => {
-  // 重新加载对应类型的文章
-  loadArticles()
-}
 
 // 获取用户信息（可后续优化到 Pinia）
 const fetchProfile = async () => {
@@ -128,10 +92,10 @@ const loadArticles = async (page = 1) => {
 }
 
 // 跳转详情
-const goToDetail = (name: string, id: number) => {
+const goToDetail = (name: string, id: number, filetype: string) => {
   router.push({
     name: 'Documents',
-    query: { name: name, id: id }
+    query: { name: name, id: id, filetype: filetype }
   })
 }
 
@@ -148,8 +112,6 @@ const signInRef = ref<InstanceType<typeof SignIn> | null>(null)
 
 // 打开签到弹窗
 const openSignIn = () => {
-  console.log(signInRef.value);
-
   if (signInRef.value) {
     signInRef.value.open()
   }
