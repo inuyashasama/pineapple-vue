@@ -83,13 +83,17 @@ const onDocumentTypeChange = (newType) => {
 
 const handleContentUpdate = (content) => {
   documentContent.value = content;
-  console.log('文档内容更新:', content);
 };
 
 onMounted(() => {
   // 默认加载 Markdown 编辑器
   documentType.value = route.query.filetype;
-  currentEditorComponent.value = route.query.filetype === 'md' ? MarkdownEditor : route.query.filetype === 'txt' ? TextEditor : DocxEditor;
+  if(documentType.value){
+    currentEditorComponent.value = documentType.value === 'md' ? MarkdownEditor : documentType.value === 'txt' ? TextEditor : DocxEditor;
+  }else{
+    currentEditorComponent.value = MarkdownEditor;
+    documentType.value = 'md';
+  }
 });
 </script>
 

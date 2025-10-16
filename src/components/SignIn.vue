@@ -132,11 +132,11 @@ const daysInMonth = computed(() => {
   // 当前月
   while (date.getMonth() === month) {
     const dateString = formatDate(date)
-    const isToday = isSameDay(date, today)
+    const isToday = isSameDay(new Date(dateString), today)
     const isSigned = signedDates.value.includes(dateString)
 
     days.push({
-      date: new Date(date),
+      date: new Date(dateString),
       isCurrentMonth: true,
       isToday,
       isSigned
