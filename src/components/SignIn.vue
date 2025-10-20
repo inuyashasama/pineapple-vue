@@ -69,9 +69,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineExpose } from 'vue'
+import { ref, computed, defineExpose, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getSignStatus, signIn, getUserPointsHistory } from '@/api/point'
+import { getPoints, signIn, getUserPointsHistory } from '@/api/point'
 import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
 
 // 用户信息
@@ -250,6 +250,15 @@ const open = () => {
 const onClosed = () => {
   // 可选：重置状态
 }
+
+onMounted(() => {
+  getPoints(userId).then((res) => {
+    // 处理积分获取结果
+    console.log('当前积分:', res)
+  }).catch((err) => {
+    console.error('获取积分失败:', err)
+  })
+})
 
 // 暴露方法给父组件
 defineExpose({

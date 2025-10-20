@@ -6,6 +6,7 @@
     </div>
     <div class="right">
       <span class="user">👤 Admin</span>
+      <button class="profile-center" @click="goToProfile">个人中心</button>
       <button class="logout" @click="logout">退出</button>
     </div>
   </div>
@@ -18,6 +19,11 @@ const router = useRouter();
 const logout = () => {
   localStorage.removeItem("token");
   router.push("/auth/login");
+};
+
+// 添加个人中心导航方法
+const goToProfile = () => {
+  router.push("/profile");
 };
 </script>
 
@@ -54,6 +60,18 @@ const logout = () => {
 .user {
   font-size: 14px;
 }
+.profile-center {
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #fff;
+}
+
+.profile-center:hover {
+  background: #f0f0f0;
+}
+
 .logout {
   padding: 4px 10px;
   border: 1px solid #ccc;
@@ -61,6 +79,7 @@ const logout = () => {
   cursor: pointer;
   background: #fff;
 }
+
 .logout:hover {
   background: #f0f0f0;
 }
