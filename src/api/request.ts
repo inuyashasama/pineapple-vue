@@ -27,6 +27,13 @@ request.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+      // 检查是否为文件上传请求（data为FormData）
+    if (config.data instanceof FormData) {
+      // 如果是文件上传，设置Content-Type为multipart/form-data
+      config.headers['Content-Type'] = 'multipart/form-data';
+    }
+
     return config;
   },
   error => {

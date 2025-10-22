@@ -171,6 +171,7 @@ const submitPasswordChange = async () => {
   try {
     // 调用修改密码API
     await modifyPassword({
+      userId: 1,
       oldPassword: passwordForm.oldPassword,
       newPassword: passwordForm.newPassword
     });

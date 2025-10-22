@@ -6,32 +6,24 @@
         <h2>注册</h2>
       </template>
 
-      <el-form
-        :model="form"
-        :rules="rules"
-        ref="formRef"
-        label-width="80px"
-      >
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="80px">
         <el-form-item label="用户名" prop="username">
           <el-input v-model="form.username" placeholder="请输入用户名" />
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
-          <el-input
-            v-model="form.password"
-            type="password"
-            placeholder="请输入密码"
-            show-password
-          />
+          <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password />
         </el-form-item>
 
         <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input
-            v-model="form.confirmPassword"
-            type="password"
-            placeholder="请再次输入密码"
-            show-password
-          />
+          <el-input v-model="form.confirmPassword" type="password" placeholder="请再次输入密码" show-password />
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="form.email" placeholder="请输入邮箱" />
+        </el-form-item>
+        <el-form-item label="头像" prop="avatar">
+          <FileUpload v-model="form.avatar" :action="actionUrl" accept="image/*" :max-size="2" preview
+            preview-class="avatar" upload-class="avatar-uploader" @uploaded="handleUploadedUrl"/>
         </el-form-item>
 
         <el-form-item>
@@ -54,16 +46,21 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, FormInstance } from 'element-plus'
-import { RegisterParams } from '@/types'
+import { User } from '@/types'
 import { register } from '@/api/auth'
+import FileUpload from '@/components/FileUpload.vue'
+import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
 
 const router = useRouter()
 const formRef = ref<FormInstance>()
+const actionUrl = ref('/api/upload/avatar');
 
-const form = ref<RegisterParams>({
+const form = ref<User>({
   username: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  email: '',
+  avatar: '',
 })
 
 const loading = ref(false)
@@ -92,6 +89,10 @@ const rules = {
   ]
 }
 
+const handleUploadedUrl = async (url: string) => { 
+  form.value.avatar = url;
+}
+
 const onSubmit = async () => {
   if (!formRef.value) return
 
@@ -105,8 +106,14 @@ const onSubmit = async () => {
       localStorage.setItem('token', token)
       ElMessage.success('注册成功！')
 
+      LocalStorageUtil.set('tempCredentials', JSON.stringify({
+        username: form.value.username,
+        password: form.value.password
+      }))
       // 注册成功后跳转到登录页
-      await router.push('/auth/login')
+      await router.push({
+        name: 'Login'
+      })
     } catch (err: any) {
       ElMessage.error(err.response?.data?.message || '注册失败')
     } finally {
@@ -147,5 +154,33 @@ onMounted(() => {
 .link a {
   color: #409eff;
   text-decoration: none;
+}
+
+/* 修复这行样式选择器 - 缺少点号 */
+.avatar-uploader .avatar {
+  width: 178px;
+  height: 178px;
+  display: block;
+}
+
+.avatar-uploader .el-upload {
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: var(--el-transition-duration-fast);
+}
+
+.avatar-uploader .el-upload:hover {
+  border-color: var(--el-color-primary);
+}
+
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  text-align: center;
 }
 </style>

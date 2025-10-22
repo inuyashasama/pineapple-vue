@@ -113,7 +113,17 @@ const onReset = () => {
 
 // 页面挂载后设置标题
 onMounted(() => {
-  document.title = '登录 - Vue3 Admin'
+  document.title = '登录'
+  // 读取临时存储的数据
+  const tempCredentials = LocalStorageUtil.get('tempCredentials')
+  if (tempCredentials) {
+    const { username,password } = JSON.parse(tempCredentials)
+    form.value.username = username
+    form.value.password = password
+    
+    // 清除临时数据
+    LocalStorageUtil.remove('tempCredentials')
+  }
 })
 </script>
 
@@ -123,7 +133,10 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-image: -webkit-image-set(url(../assets/bg.jpg));
+  background-image: url(../assets/bg.jpg);
+  background-size: cover;        /* 覆盖整个容器 */
+  background-position: center;   /* 居中显示 */
+  background-repeat: no-repeat;  /* 不重复 */
 }
 
 .auth-form {
