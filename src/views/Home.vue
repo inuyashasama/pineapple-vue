@@ -1,10 +1,19 @@
 <template>
   <div class="home-container">
-
-    <!-- 添加签到组件 -->
+    <!-- 签到组件 -->
     <SignIn ref="signInRef" />
     <!-- 主体内容 -->
     <el-main class="main">
+      <!-- 天气横幅 -->
+      <div class="weather-banner" v-if="weatherInfo">
+        <div class="weather-content">
+          <span class="location">{{ weatherInfo.city }}</span>
+          <span class="temperature">{{ weatherInfo.temperature }}°C</span>
+          <span class="description">{{ weatherInfo.weather }}</span>
+          <span class="humidity">湿度: {{ weatherInfo.humidity }}%</span>
+        </div>
+      </div>
+
       <div class="content-wrapper">
         <!-- 👇 新增：签到组件 -->
         <!-- 文章内容区域 -->
@@ -36,7 +45,7 @@
           </div>
           <h3>最新文章</h3>
           <ul class="sidebar-article-list">
-            <li v-for="article in articles" :key="article.id" @click="goToDetail(article.title, article.id, article.fileType)"
+            <li v-for="article in articles" :key="article.id" @click="goToDetail(article.title, article.id, article.filetype)"
               class="sidebar-article-item">
               <div class="sidebar-article-title">{{ article.title }}</div>
               <div class="sidebar-article-meta">
@@ -57,6 +66,11 @@ import { getArticles } from '@/api/article'
 import { Article } from '@/types/article'
 import SignIn from '@/components/SignIn.vue'
 import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
+import { WeatherInfo } from '@/types/weather'
+
+// 添加天气数据状态
+const weatherInfo = ref<WeatherInfo | null>(null)
+const loadingWeather = ref(false)
 
 // 路由
 const router = useRouter()
@@ -92,13 +106,54 @@ const loadArticles = async (page = 1) => {
 }
 
 // 跳转详情
-const goToDetail = (name: string, id: number, filetype: string) => {
+const goToDetail = (name: string, id: number | undefined, filetype: string | undefined) => {
   router.push({
     name: 'Documents',
     query: { name: name, id: id, filetype: filetype }
   })
 }
 
+// 获取天气数据
+// 修改 getWeatherData 函数
+const getWeatherData = async (city: string) => {
+  loadingWeather.value = true
+  try {
+    city = city || '厦门'
+    
+    // 检查缓存
+    const cacheKey = `weather_${city}`
+    const cachedData = LocalStorageUtil.get(cacheKey)
+    const cacheTime = LocalStorageUtil.get(`${cacheKey}_time`)
+    
+    // 如果缓存存在且未过期（1小时）
+    if (cachedData && cacheTime) {
+      const now = new Date().getTime()
+      const cacheAge = now - parseInt(cacheTime)
+      // 缓存有效期1小时
+      if (cacheAge < 60 * 60 * 1000) {
+        weatherInfo.value = cachedData
+        return
+      }
+    }
+    
+    // 缓存不存在或已过期，重新请求
+    const apiKey = 'eae0c155eabe9e73dd59b5dae8a1c4bb'
+    const url = `https://restapi.amap.com/v3/weather/weatherInfo?key=${apiKey}&city=${city}`
+    const response = await fetch(url)
+    const data: any = await response.json()
+    
+    if (data.status === '1' && data.lives && data.lives.length > 0) {
+      weatherInfo.value = data.lives[0]
+      // 保存到缓存
+      LocalStorageUtil.set(cacheKey, data.lives[0])
+      LocalStorageUtil.set(`${cacheKey}_time`, new Date().getTime().toString())
+    }
+  } catch (error) {
+    console.error('获取天气数据失败:', error)
+  } finally {
+    loadingWeather.value = false
+  }
+}
 
 // 页面加载
 onMounted(async () => {
@@ -106,7 +161,9 @@ onMounted(async () => {
     await fetchProfile()
   }
   await loadArticles()
+  getWeatherData('厦门')
 })
+
 // 获取子组件实例
 const signInRef = ref<InstanceType<typeof SignIn> | null>(null)
 
@@ -266,6 +323,52 @@ const openSignIn = () => {
 @media (max-width: 768px) {
   .content-wrapper {
     flex-direction: column;
+  }
+}
+
+/* 天气模块样式 */
+.weather-banner {
+  background: linear-gradient(90deg, #00b4db, #0083b0);
+  color: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.weather-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.weather-content .location {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.weather-content .temperature {
+  font-weight: bold;
+  font-size: 1.3em;
+}
+
+.weather-content .description {
+  font-size: 1em;
+}
+
+.weather-content .humidity {
+  font-size: 0.9em;
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .weather-content {
+    justify-content: space-between;
+  }
+  
+  .weather-content .temperature {
+    font-size: 1.1em;
   }
 }
 </style>

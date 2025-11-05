@@ -251,14 +251,6 @@ const onClosed = () => {
   // 可选：重置状态
 }
 
-onMounted(() => {
-  getPoints(userId).then((res) => {
-    // 处理积分获取结果
-    console.log('当前积分:', res)
-  }).catch((err) => {
-    console.error('获取积分失败:', err)
-  })
-})
 
 // 暴露方法给父组件
 defineExpose({

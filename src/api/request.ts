@@ -14,7 +14,7 @@ const request = axios.create({
   baseURL: BASE_URL,
   timeout: TIMEOUT,
   headers: {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json; charset=UTF-8',
   },
 });
 
