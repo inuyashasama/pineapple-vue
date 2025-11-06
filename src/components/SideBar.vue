@@ -32,6 +32,7 @@ const menu = computed(() => [
   { path: "/", title: "首页", icon: "icon-home" },
   { path: "/documents", title: "文章创作", icon: "icon-edit" },
   { path: "/outFitDesigner", title: "搭配设计", icon: "icon-edit" },
+  { path: "/diary", title: "日记", icon: "icon-edit" },
 ]);
 
 const go = (path: string) => {

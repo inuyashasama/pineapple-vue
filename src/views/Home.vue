@@ -2,65 +2,154 @@
   <div class="home-container">
     <!-- 签到组件 -->
     <SignIn ref="signInRef" />
-    <!-- 主体内容 -->
+
     <el-main class="main">
-      <!-- 天气横幅 -->
-      <div class="weather-banner" v-if="weatherInfo">
-        <div class="weather-content">
-          <span class="location">{{ weatherInfo.city }}</span>
-          <span class="temperature">{{ weatherInfo.temperature }}°C</span>
-          <span class="description">{{ weatherInfo.weather }}</span>
-          <span class="humidity">湿度: {{ weatherInfo.humidity }}%</span>
+      <!-- 顶部：天气横幅 + 搜索/筛选 -->
+      <div class="top-bar">
+        <div class="top-left">
+          <div class="weather-banner" v-if="weatherInfo">
+            <div class="weather-content">
+              <span class="location">{{ weatherInfo.city }}</span>
+              <span class="temperature">{{ weatherInfo.temperature }}°C</span>
+              <span class="description">{{ weatherInfo.weather }}</span>
+              <span class="humidity">湿度: {{ weatherInfo.humidity }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="top-right">
+          <el-input v-model="searchQuery" placeholder="搜索文章标题或内容" clearable size="small" class="home-search" @clear="onSearchClear" @keyup.enter.native="loadArticles(1)">
+            <template #prefix>
+              <i class="el-icon-search"></i>
+            </template>
+          </el-input>
+
+          <el-select v-model="selectedTag" size="small" clearable placeholder="筛选标签" class="home-select" @change="() => loadArticles(1)">
+            <el-option label="全部" value="全部" />
+            <el-option v-for="tag in tagsList" :key="tag" :label="tag" :value="tag" />
+          </el-select>
+
+          <el-select v-model="selectedCategory" size="small" clearable placeholder="分类" @change="() => loadArticles(1)">
+            <el-option label="全部" value="全部" />
+            <el-option v-for="cat in categories" :key="cat" :label="cat" :value="cat" />
+          </el-select>
+          <el-button class="mobile-filter-btn" icon="el-icon-menu" type="text" @click="drawerVisible = true" title="筛选" />
         </div>
       </div>
 
-      <div class="content-wrapper">
-        <!-- 👇 新增：签到组件 -->
-        <!-- 文章内容区域 -->
-        <div class="articles-content">
-          <div v-for="article in articles" :key="article.id" class="article-item">
-            <h3 @click="goToDetail(article.title, article.id, article.filetype)" class="article-title">
-              {{ article.title }}
-            </h3>
-            <p class="article-meta">
-              作者: {{ userInfo.username }} |
-              发布时间: {{ article.createTime }}
-            </p>
-            <p class="article-excerpt">
-              {{ article.content?.substring(0, 100) }}...
-            </p>
+      <!-- 主体两栏：左主内容，右侧栏 -->
+      <div class="content-layout">
+        <section class="main-content">
+          <!-- Hero / Featured -->
+          <div class="hero" v-if="featuredArticle">
+            <div class="hero-cover" @click="goToDetail(featuredArticle.title, featuredArticle.id, featuredArticle.filetype)">
+              <div class="hero-overlay">
+                <h2 class="hero-title">{{ featuredArticle.title }}</h2>
+                <p class="hero-meta">作者: {{ userInfo.username }} · {{ formatDate(featuredArticle.createTime) }}</p>
+              </div>
+            </div>
+            <p class="hero-excerpt">{{ featuredArticle.content?.substring(0, 200) }}...</p>
+            <div class="hero-actions">
+              <input ref="coverInput" type="file" accept="image/*" style="display:none" @change="onCoverSelected" />
+              <el-button size="small" type="primary" @click="openCoverInput">上传封面</el-button>
+              <el-button size="small" @click="removeFeaturedCover">移除封面</el-button>
+            </div>
+          </div>
+
+          <!-- 文章网格 -->
+          <div class="articles-grid">
+            <div v-for="article in pagedArticles" :key="article.id" class="article-card">
+              <div class="card-cover" v-if="article.coverImage" @click="goToDetail(article.title, article.id, article.filetype)">
+                <img :src="article.coverImage" alt="cover" />
+              </div>
+              <div class="card-body" @click="goToDetail(article.title, article.id, article.filetype)">
+                <h4 class="card-title">{{ article.title }}</h4>
+                <div class="card-meta">{{ formatDate(article.createTime) }} · {{ article.views || 0 }} 阅读</div>
+                <p class="card-excerpt">{{ article.content?.substring(0, 120) }}...</p>
+                <div class="card-tags">
+                  <el-tag v-for="t in (article.tags || [])" :key="t" size="mini" @click.stop="selectTagAndLoad(t)">{{ t }}</el-tag>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- 分页 -->
           <el-pagination v-if="total > 0" class="pagination" :current-page="currentPage" :page-size="pageSize"
             :total="total" layout="prev, pager, next, total" @current-change="loadArticles" />
-        </div>
+        </section>
 
-        <!-- 右侧文章列表 -->
-        <div class="sidebar">
-          <div class="sign-in-trigger">
-            <el-button type="primary" @click="openSignIn" size="large">
-              🎁 每日签到
-            </el-button>
+        <aside class="right-panel">
+          <div class="panel-card sign-panel">
+            <SignIn ref="signInRef" />
+            <el-button type="primary" @click="openSignIn" size="small">每日签到</el-button>
           </div>
-          <h3>最新文章</h3>
-          <ul class="sidebar-article-list">
-            <li v-for="article in articles" :key="article.id" @click="goToDetail(article.title, article.id, article.filetype)"
-              class="sidebar-article-item">
-              <div class="sidebar-article-title">{{ article.title }}</div>
-              <div class="sidebar-article-meta">
-                {{ article.createTime }}
+
+          <div class="panel-card">
+            <h4>标签云</h4>
+            <div class="tag-cloud">
+              <el-tag v-for="tag in tagsList" :key="tag" class="tag-cloud-item" @click="selectedTag = tag">{{ tag }}</el-tag>
+              <el-tag v-if="tagsList.length===0" type="info">暂无标签</el-tag>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <h4>热门文章</h4>
+            <ul class="popular-list">
+              <li v-for="p in popularArticles" :key="p.id" @click="goToDetail(p.title, p.id, p.filetype)">
+                <div class="pop-title">{{ p.title }}</div>
+                <div class="pop-meta">{{ formatDate(p.createTime) }} · {{ p.views || 0 }}</div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="panel-card">
+            <h4>阅读统计（TOP 5）</h4>
+            <div class="mini-stats">
+              <div v-for="p in popularArticles.slice(0,5)" :key="p.id" class="stat-row">
+                <div class="stat-label">{{ p.title }}</div>
+                <div class="stat-bar-wrap">
+                  <div class="stat-bar" :style="{ width: Math.min(100, (p.views||0) / (popularArticles[0]?.views || 1) * 100) + '%' }"></div>
+                </div>
+                <div class="stat-value">{{ p.views || 0 }}</div>
               </div>
-            </li>
-          </ul>
-        </div>
+            </div>
+          </div>
+
+          <div class="panel-card weather-small" v-if="weatherInfo">
+            <h4>当前天气</h4>
+            <div>{{ weatherInfo.city }} · {{ weatherInfo.temperature }}°C · {{ weatherInfo.weather }}</div>
+          </div>
+        </aside>
       </div>
     </el-main>
+    <!-- 移动端筛选抽屉 -->
+    <el-drawer v-model:visible="drawerVisible" direction="rtl" size="320px" with-header="false">
+      <div class="drawer-panel">
+        <div class="drawer-section">
+          <h4>搜索</h4>
+          <el-input v-model="searchQuery" placeholder="搜索文章标题或内容" clearable @clear="onSearchClear" @keyup.enter.native="loadArticles(1)"></el-input>
+          <el-button type="primary" @click="loadArticles(1)" style="margin-top:8px">应用</el-button>
+        </div>
+        <div class="drawer-section">
+          <h4>标签</h4>
+          <div class="tag-cloud">
+            <el-tag v-for="tag in tagsList" :key="tag" @click="selectTagAndLoad(tag)">{{ tag }}</el-tag>
+          </div>
+        </div>
+        <div class="drawer-section">
+          <h4>分类</h4>
+          <el-select v-model="selectedCategory" clearable @change="() => loadArticles(1)">
+            <el-option label="全部" value="全部" />
+            <el-option v-for="cat in categories" :key="cat" :label="cat" :value="cat" />
+          </el-select>
+        </div>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getArticles } from '@/api/article'
 import { Article } from '@/types/article'
@@ -79,10 +168,110 @@ const isLogin = !!LocalStorageUtil.get('token')
 const userInfo = ref<{ username: string }>({ username: '用户' })
 
 // 文章列表
-const articles = ref<Article[]>([])
+type HomeArticle = Article & { coverImage?: string; tags?: string[] }
+const articles = ref<HomeArticle[]>([])
 const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
+
+// 新增：搜索与筛选
+const searchQuery = ref('')
+const selectedTag = ref<string | null>('全部')
+const selectedCategory = ref<string | null>('全部')
+
+// 从 articles 中派生的标签/分类/推荐
+const tagsList = computed(() => {
+  const s = new Set<string>()
+  articles.value.forEach(a => (a as any).tags?.forEach((t: string) => s.add(t)))
+  return Array.from(s)
+})
+
+const categories = computed(() => {
+  // 临时使用 filetype 作为分类示例
+  const s = new Set<string>()
+  articles.value.forEach(a => { if (a.filetype) s.add(a.filetype) })
+  return Array.from(s)
+})
+
+const featuredArticle = computed(() => articles.value.length ? articles.value[0] : null)
+
+const filteredArticles = computed(() => {
+  const q = (searchQuery.value || '').toLowerCase().trim()
+  return articles.value.filter(a => {
+    if (selectedTag.value && selectedTag.value !== '全部') {
+      const tags = (a as any).tags || []
+      if (!tags.includes(selectedTag.value)) return false
+    }
+    if (selectedCategory.value && selectedCategory.value !== '全部') {
+      if (a.filetype !== selectedCategory.value) return false
+    }
+    if (q) {
+      return (a.title || '').toLowerCase().includes(q) || (a.content || '').toLowerCase().includes(q)
+    }
+    return true
+  })
+})
+
+// 分页展示：当前依然基于后端分页，这里对当前页内数据再做过滤
+const pagedArticles = computed(() => filteredArticles.value)
+
+const popularArticles = computed(() => {
+  return [...articles.value].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 6)
+})
+
+// Mobile drawer for filters
+const drawerVisible = ref(false)
+
+// Cover upload handling (client-side resize and set as base64)
+const onCoverSelected = async (e: Event) => {
+  const input = e.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+  const file = input.files[0]
+  const reader = new FileReader()
+  reader.readAsDataURL(file)
+  reader.onload = () => {
+    const dataUrl = reader.result as string
+    // 简单裁剪/缩放：绘制到 canvas，输出固定宽高比例 (1200x400)
+    const img = new Image()
+    img.onload = () => {
+      const w = 1200
+      const h = 400
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')!
+      // cover crop: scale and center
+      const ratio = Math.max(w / img.width, h / img.height)
+      const sw = w / ratio
+      const sh = h / ratio
+      const sx = (img.width - sw) / 2
+      const sy = (img.height - sh) / 2
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h)
+      const out = canvas.toDataURL('image/jpeg', 0.85)
+      // set to first article (featured)
+      if (articles.value.length > 0) {
+        articles.value[0].coverImage = out
+      }
+    }
+    img.src = dataUrl
+  }
+}
+
+const removeFeaturedCover = () => {
+  if (articles.value.length > 0) {
+    delete articles.value[0].coverImage
+  }
+}
+
+const selectTagAndLoad = (tag: string) => {
+  selectedTag.value = tag
+  loadArticles(1)
+}
+
+const coverInput = ref<HTMLInputElement | null>(null)
+const openCoverInput = () => {
+  coverInput.value?.click()
+}
 
 // 获取用户信息（可后续优化到 Pinia）
 const fetchProfile = async () => {
@@ -96,13 +285,28 @@ const fetchProfile = async () => {
 // 加载文章列表
 const loadArticles = async (page = 1) => {
   try {
-    const data = await getArticles(page, pageSize.value) as any
+    // 服务端分页与筛选：传递搜索关键词、标签、分类
+    const params: Record<string, any> = {}
+    if (searchQuery.value) params.q = searchQuery.value
+    if (selectedTag.value && selectedTag.value !== '全部') params.tag = selectedTag.value
+    if (selectedCategory.value && selectedCategory.value !== '全部') params.category = selectedCategory.value
+
+    const data = await getArticles(page, pageSize.value, params) as any
     articles.value = data.records
     total.value = data.total
     currentPage.value = page
   } catch (err) {
     // 错误已在拦截器中提示
   }
+}
+
+const onSearchClear = () => {
+  searchQuery.value = ''
+}
+
+const formatDate = (date: string | undefined) => {
+  if (!date) return ''
+  return new Date(date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric' })
 }
 
 // 跳转详情
@@ -163,6 +367,9 @@ onMounted(async () => {
   await loadArticles()
   getWeatherData('厦门')
 })
+
+// 移动端抽屉：在 template 末尾加入 el-drawer
+// （使用 ref drawerVisible）
 
 // 获取子组件实例
 const signInRef = ref<InstanceType<typeof SignIn> | null>(null)
@@ -370,5 +577,55 @@ const openSignIn = () => {
   .weather-content .temperature {
     font-size: 1.1em;
   }
+}
+
+/* 新增样式 */
+.top-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.top-right{display:flex;align-items:center;gap:10px}
+.home-search{width:300px}
+.home-select{min-width:140px}
+.mobile-filter-btn{display:none}
+
+.content-layout{display:flex;gap:20px}
+.main-content{flex:3}
+.right-panel{flex:1;display:flex;flex-direction:column;gap:12px}
+
+.hero{background:linear-gradient(180deg,#fff,#fbfdff);padding:18px;border-radius:10px;margin-bottom:16px;position:relative}
+.hero-cover{height:220px;background:#dfefff;border-radius:8px;display:flex;align-items:flex-end;overflow:hidden;cursor:pointer}
+.hero-overlay{padding:16px;color:#123}
+.hero-title{margin:0;color:#123;font-size:22px}
+.hero-excerpt{margin-top:10px;color:#666}
+.hero-actions{margin-top:8px;display:flex;gap:8px}
+
+.articles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.article-card{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);cursor:pointer}
+.card-cover img{width:100%;height:140px;object-fit:cover}
+.card-body{padding:12px}
+.card-title{margin:0 0 8px}
+.card-meta{font-size:12px;color:#999;margin-bottom:8px}
+.card-excerpt{color:#666;font-size:14px}
+.card-tags{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+
+.tag-cloud-item{cursor:pointer;margin:6px 6px 0 0}
+
+.popular-list{list-style:none;padding:0;margin:0}
+.popular-list li{padding:8px 0;border-bottom:1px dashed #eee;cursor:pointer}
+.popular-list li:last-child{border-bottom:none}
+
+.mini-stats .stat-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.stat-label{flex:1;font-size:13px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat-bar-wrap{width:120px;background:#f0f3ff;height:8px;border-radius:4px;overflow:hidden}
+.stat-bar{height:8px;background:linear-gradient(90deg,#6b8cff,#3b6bff)}
+.stat-value{width:40px;text-align:right;color:#666;font-size:12px}
+
+.drawer-panel{padding:16px}
+.drawer-section{margin-bottom:12px}
+
+@media (max-width: 768px) {
+  .home-search{display:none}
+  .home-select{display:none}
+  .mobile-filter-btn{display:inline-flex}
+  .content-layout{flex-direction:column}
+  .top-right{gap:6px}
 }
 </style>

@@ -45,7 +45,7 @@
         <div class="days-grid">
           <div
             v-for="day in daysInMonth"
-            :key="day.date"
+            :key="formatDate(day.date)"
             :class="{
               'day': true,
               'current': day.isCurrentMonth,
@@ -69,9 +69,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineExpose, onMounted } from 'vue'
+import { ref, computed, defineExpose } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getPoints, signIn, getUserPointsHistory } from '@/api/point'
+import { signIn, getUserPointsHistory } from '@/api/point'
 import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
 
 // 用户信息

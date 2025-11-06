@@ -3,9 +3,9 @@ import { Article } from '@/types/article'
 import { Page } from '@/types/response'
 
 // 获取文章列表
-export const getArticles = (page = 1, size = 10) => {
+export const getArticles = (page = 1, size = 10, params: Record<string, any> = {}) => {
   return request.get<Page<Article>>('/api/article/page', {
-    params: { page, size }
+    params: { page, size, ...params }
   })
 }
 

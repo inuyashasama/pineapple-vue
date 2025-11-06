@@ -28,10 +28,8 @@
     "src/**/*.ts",
     "src/**/*.d.ts",
     "src/**/*.tsx",
-    "src/**/*.vue"
-, "src/env/env.dev", "src/env/env.prod"  ],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
+    "src/**/*.vue",
+    "src/env/env.dev",
+    "src/env/env.prod",
   ]
 }
