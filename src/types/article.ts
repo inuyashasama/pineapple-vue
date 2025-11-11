@@ -7,4 +7,5 @@ export interface Article {
   updateTime?: string
   views?: number
   filetype?: string
+  imageUrl?: string
 }

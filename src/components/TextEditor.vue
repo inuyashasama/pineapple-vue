@@ -70,6 +70,10 @@ const props = defineProps({
   title: {
     type: String,
     default: 'Text Editor'
+  },
+  content: {
+    type: String,
+    default: ''
   }
 })
 
@@ -78,6 +82,13 @@ const emit = defineEmits(['update:content'])
 // 监听文本变化并通知父组件
 watch(text, (newText) => {
   emit('update:content', newText)
+})
+
+// 如果父组件传入 content，同步到本地 text
+watch(() => props.content, (v) => {
+  if (v !== undefined && v !== null && v !== text.value) {
+    text.value = v || ''
+  }
 })
 
 /** 下载 TXT */

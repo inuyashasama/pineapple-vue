@@ -6,25 +6,16 @@
     <el-main class="main">
       <!-- 顶部：天气横幅 + 搜索/筛选 -->
       <div class="top-bar">
-        <div class="top-left">
-          <div class="weather-banner" v-if="weatherInfo">
-            <div class="weather-content">
-              <span class="location">{{ weatherInfo.city }}</span>
-              <span class="temperature">{{ weatherInfo.temperature }}°C</span>
-              <span class="description">{{ weatherInfo.weather }}</span>
-              <span class="humidity">湿度: {{ weatherInfo.humidity }}%</span>
-            </div>
-          </div>
-        </div>
-
         <div class="top-right">
-          <el-input v-model="searchQuery" placeholder="搜索文章标题或内容" clearable size="small" class="home-search" @clear="onSearchClear" @keyup.enter.native="loadArticles(1)">
+          <el-input v-model="searchQuery" placeholder="搜索文章标题或内容" clearable size="small" class="home-search"
+            @clear="onSearchClear" @keyup.enter.native="loadArticles(1)">
             <template #prefix>
               <i class="el-icon-search"></i>
             </template>
           </el-input>
 
-          <el-select v-model="selectedTag" size="small" clearable placeholder="筛选标签" class="home-select" @change="() => loadArticles(1)">
+          <el-select v-model="selectedTag" size="small" clearable placeholder="筛选标签" class="home-select"
+            @change="() => loadArticles(1)">
             <el-option label="全部" value="全部" />
             <el-option v-for="tag in tagsList" :key="tag" :label="tag" :value="tag" />
           </el-select>
@@ -33,7 +24,8 @@
             <el-option label="全部" value="全部" />
             <el-option v-for="cat in categories" :key="cat" :label="cat" :value="cat" />
           </el-select>
-          <el-button class="mobile-filter-btn" icon="el-icon-menu" type="text" @click="drawerVisible = true" title="筛选" />
+          <el-button class="mobile-filter-btn" icon="el-icon-menu" type="text" @click="drawerVisible = true"
+            title="筛选" />
         </div>
       </div>
 
@@ -42,7 +34,8 @@
         <section class="main-content">
           <!-- Hero / Featured -->
           <div class="hero" v-if="featuredArticle">
-            <div class="hero-cover" @click="goToDetail(featuredArticle.title, featuredArticle.id, featuredArticle.filetype)">
+            <div class="hero-cover"
+              @click="goToDetail(featuredArticle.title, featuredArticle.id, featuredArticle.filetype)">
               <div class="hero-overlay">
                 <h2 class="hero-title">{{ featuredArticle.title }}</h2>
                 <p class="hero-meta">作者: {{ userInfo.username }} · {{ formatDate(featuredArticle.createTime) }}</p>
@@ -59,15 +52,23 @@
           <!-- 文章网格 -->
           <div class="articles-grid">
             <div v-for="article in pagedArticles" :key="article.id" class="article-card">
-              <div class="card-cover" v-if="article.coverImage" @click="goToDetail(article.title, article.id, article.filetype)">
-                <img :src="article.coverImage" alt="cover" />
+              <div class="card-cover" v-if="article.imageUrl"
+                @click="goToDetail(article.title, article.id, article.filetype)">
+                <img :src="article.imageUrl" alt="cover" />
               </div>
               <div class="card-body" @click="goToDetail(article.title, article.id, article.filetype)">
                 <h4 class="card-title">{{ article.title }}</h4>
                 <div class="card-meta">{{ formatDate(article.createTime) }} · {{ article.views || 0 }} 阅读</div>
                 <p class="card-excerpt">{{ article.content?.substring(0, 120) }}...</p>
                 <div class="card-tags">
-                  <el-tag v-for="t in (article.tags || [])" :key="t" size="mini" @click.stop="selectTagAndLoad(t)">{{ t }}</el-tag>
+                  <el-tag v-for="t in (article.tags || [])" :key="t" size="mini" @click.stop="selectTagAndLoad(t)">{{ t
+                    }}</el-tag>
+                </div>
+                <!-- 添加删除按钮 -->
+                <div class="card-actions">
+                  <el-button v-if="isLogin" size="small" type="danger" @click.stop="handleDelete(article.id)">
+                    删 除
+                  </el-button>
                 </div>
               </div>
             </div>
@@ -87,8 +88,9 @@
           <div class="panel-card">
             <h4>标签云</h4>
             <div class="tag-cloud">
-              <el-tag v-for="tag in tagsList" :key="tag" class="tag-cloud-item" @click="selectedTag = tag">{{ tag }}</el-tag>
-              <el-tag v-if="tagsList.length===0" type="info">暂无标签</el-tag>
+              <el-tag v-for="tag in tagsList" :key="tag" class="tag-cloud-item" @click="selectedTag = tag">{{ tag
+                }}</el-tag>
+              <el-tag v-if="tagsList.length === 0" type="info">暂无标签</el-tag>
             </div>
           </div>
 
@@ -105,10 +107,12 @@
           <div class="panel-card">
             <h4>阅读统计（TOP 5）</h4>
             <div class="mini-stats">
-              <div v-for="p in popularArticles.slice(0,5)" :key="p.id" class="stat-row">
+              <div v-for="p in popularArticles.slice(0, 5)" :key="p.id" class="stat-row">
                 <div class="stat-label">{{ p.title }}</div>
                 <div class="stat-bar-wrap">
-                  <div class="stat-bar" :style="{ width: Math.min(100, (p.views||0) / (popularArticles[0]?.views || 1) * 100) + '%' }"></div>
+                  <div class="stat-bar"
+                    :style="{ width: Math.min(100, (p.views || 0) / (popularArticles[0]?.views || 1) * 100) + '%' }">
+                  </div>
                 </div>
                 <div class="stat-value">{{ p.views || 0 }}</div>
               </div>
@@ -127,7 +131,8 @@
       <div class="drawer-panel">
         <div class="drawer-section">
           <h4>搜索</h4>
-          <el-input v-model="searchQuery" placeholder="搜索文章标题或内容" clearable @clear="onSearchClear" @keyup.enter.native="loadArticles(1)"></el-input>
+          <el-input v-model="searchQuery" placeholder="搜索文章标题或内容" clearable @clear="onSearchClear"
+            @keyup.enter.native="loadArticles(1)"></el-input>
           <el-button type="primary" @click="loadArticles(1)" style="margin-top:8px">应用</el-button>
         </div>
         <div class="drawer-section">
@@ -151,7 +156,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { getArticles } from '@/api/article'
+import { getArticles,deleteArticle } from '@/api/article'
 import { Article } from '@/types/article'
 import SignIn from '@/components/SignIn.vue'
 import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
@@ -311,6 +316,12 @@ const formatDate = (date: string | undefined) => {
 
 // 跳转详情
 const goToDetail = (name: string, id: number | undefined, filetype: string | undefined) => {
+  if (filetype === 'diary') {
+    router.push({
+      name: 'Diary',
+    })
+    return
+  }
   router.push({
     name: 'Documents',
     query: { name: name, id: id, filetype: filetype }
@@ -318,17 +329,16 @@ const goToDetail = (name: string, id: number | undefined, filetype: string | und
 }
 
 // 获取天气数据
-// 修改 getWeatherData 函数
 const getWeatherData = async (city: string) => {
   loadingWeather.value = true
   try {
     city = city || '厦门'
-    
+
     // 检查缓存
     const cacheKey = `weather_${city}`
     const cachedData = LocalStorageUtil.get(cacheKey)
     const cacheTime = LocalStorageUtil.get(`${cacheKey}_time`)
-    
+
     // 如果缓存存在且未过期（1小时）
     if (cachedData && cacheTime) {
       const now = new Date().getTime()
@@ -339,13 +349,13 @@ const getWeatherData = async (city: string) => {
         return
       }
     }
-    
+
     // 缓存不存在或已过期，重新请求
     const apiKey = 'eae0c155eabe9e73dd59b5dae8a1c4bb'
     const url = `https://restapi.amap.com/v3/weather/weatherInfo?key=${apiKey}&city=${city}`
     const response = await fetch(url)
     const data: any = await response.json()
-    
+
     if (data.status === '1' && data.lives && data.lives.length > 0) {
       weatherInfo.value = data.lives[0]
       // 保存到缓存
@@ -358,6 +368,20 @@ const getWeatherData = async (city: string) => {
     loadingWeather.value = false
   }
 }
+
+// 添加删除文章函数
+const handleDelete = async (id: number | undefined) => {
+  try {
+    if (!id) return
+    // 调用删除 API
+    await deleteArticle(id)
+    // 重新加载文章列表
+    loadArticles(currentPage.value)
+  } catch (error) {
+    console.error('删除文章失败:', error)
+  }
+}
+
 
 // 页面加载
 onMounted(async () => {
@@ -383,6 +407,13 @@ const openSignIn = () => {
 </script>
 
 <style scoped>
+.card-actions {
+  display: flex;
+  margin-bottom: 5px;
+  justify-content: flex-end;
+  margin-top: auto
+}
+
 .home-container {
   min-height: 100vh;
   background-color: #f5f5f5;
@@ -573,59 +604,231 @@ const openSignIn = () => {
   .weather-content {
     justify-content: space-between;
   }
-  
+
   .weather-content .temperature {
     font-size: 1.1em;
   }
 }
 
 /* 新增样式 */
-.top-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
-.top-right{display:flex;align-items:center;gap:10px}
-.home-search{width:300px}
-.home-select{min-width:140px}
-.mobile-filter-btn{display:none}
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px
+}
 
-.content-layout{display:flex;gap:20px}
-.main-content{flex:3}
-.right-panel{flex:1;display:flex;flex-direction:column;gap:12px}
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 10px
+}
 
-.hero{background:linear-gradient(180deg,#fff,#fbfdff);padding:18px;border-radius:10px;margin-bottom:16px;position:relative}
-.hero-cover{height:220px;background:#dfefff;border-radius:8px;display:flex;align-items:flex-end;overflow:hidden;cursor:pointer}
-.hero-overlay{padding:16px;color:#123}
-.hero-title{margin:0;color:#123;font-size:22px}
-.hero-excerpt{margin-top:10px;color:#666}
-.hero-actions{margin-top:8px;display:flex;gap:8px}
+.home-search {
+  width: 300px
+}
 
-.articles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-.article-card{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);cursor:pointer}
-.card-cover img{width:100%;height:140px;object-fit:cover}
-.card-body{padding:12px}
-.card-title{margin:0 0 8px}
-.card-meta{font-size:12px;color:#999;margin-bottom:8px}
-.card-excerpt{color:#666;font-size:14px}
-.card-tags{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.home-select {
+  min-width: 140px
+}
 
-.tag-cloud-item{cursor:pointer;margin:6px 6px 0 0}
+.mobile-filter-btn {
+  display: none
+}
 
-.popular-list{list-style:none;padding:0;margin:0}
-.popular-list li{padding:8px 0;border-bottom:1px dashed #eee;cursor:pointer}
-.popular-list li:last-child{border-bottom:none}
+.content-layout {
+  display: flex;
+  gap: 20px
+}
 
-.mini-stats .stat-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.stat-label{flex:1;font-size:13px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.stat-bar-wrap{width:120px;background:#f0f3ff;height:8px;border-radius:4px;overflow:hidden}
-.stat-bar{height:8px;background:linear-gradient(90deg,#6b8cff,#3b6bff)}
-.stat-value{width:40px;text-align:right;color:#666;font-size:12px}
+.main-content {
+  flex: 3
+}
 
-.drawer-panel{padding:16px}
-.drawer-section{margin-bottom:12px}
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px
+}
+
+.hero {
+  background: linear-gradient(180deg, #fff, #fbfdff);
+  padding: 18px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  position: relative
+}
+
+.hero-cover {
+  height: 220px;
+  background: #dfefff;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  cursor: pointer
+}
+
+.hero-overlay {
+  padding: 16px;
+  color: #123
+}
+
+.hero-title {
+  margin: 0;
+  color: #123;
+  font-size: 22px
+}
+
+.hero-excerpt {
+  margin-top: 10px;
+  color: #666
+}
+
+.hero-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px
+}
+
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px
+}
+
+.article-card {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  display: flex; 
+  flex-direction: column; 
+  height: 100%
+}
+
+.card-cover img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover
+}
+
+.card-body {
+  padding: 12px;
+  display: flex; 
+  flex-direction: column; 
+  flex: 1
+}
+
+.card-title {
+  margin: 0 0 8px
+}
+
+.card-meta {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px
+}
+
+.card-excerpt {
+  color: #666;
+  font-size: 14px
+}
+
+.card-tags {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap
+}
+
+.tag-cloud-item {
+  cursor: pointer;
+  margin: 6px 6px 0 0
+}
+
+.popular-list {
+  list-style: none;
+  padding: 0;
+  margin: 0
+}
+
+.popular-list li {
+  padding: 8px 0;
+  border-bottom: 1px dashed #eee;
+  cursor: pointer
+}
+
+.popular-list li:last-child {
+  border-bottom: none
+}
+
+.mini-stats .stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px
+}
+
+.stat-label {
+  flex: 1;
+  font-size: 13px;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis
+}
+
+.stat-bar-wrap {
+  width: 120px;
+  background: #f0f3ff;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden
+}
+
+.stat-bar {
+  height: 8px;
+  background: linear-gradient(90deg, #6b8cff, #3b6bff)
+}
+
+.stat-value {
+  width: 40px;
+  text-align: right;
+  color: #666;
+  font-size: 12px
+}
+
+.drawer-panel {
+  padding: 16px
+}
+
+.drawer-section {
+  margin-bottom: 12px
+}
 
 @media (max-width: 768px) {
-  .home-search{display:none}
-  .home-select{display:none}
-  .mobile-filter-btn{display:inline-flex}
-  .content-layout{flex-direction:column}
-  .top-right{gap:6px}
+  .home-search {
+    display: none
+  }
+
+  .home-select {
+    display: none
+  }
+
+  .mobile-filter-btn {
+    display: inline-flex
+  }
+
+  .content-layout {
+    flex-direction: column
+  }
+
+  .top-right {
+    gap: 6px
+  }
 }
 </style>

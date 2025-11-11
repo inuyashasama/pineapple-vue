@@ -2,10 +2,6 @@
 <template>
   <div class="auth-container">
     <el-card class="auth-form" shadow="hover">
-      <template #header>
-        <h2>注册</h2>
-      </template>
-
       <el-form :model="form" :rules="rules" ref="formRef" label-width="80px">
         <el-form-item label="用户名" prop="username">
           <el-input v-model="form.username" placeholder="请输入用户名" />

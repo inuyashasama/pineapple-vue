@@ -54,13 +54,26 @@ import { getArticle, createArticle } from '@/api/article'
 
 import { MdEditor } from 'md-editor-v3'
 import { useRoute } from 'vue-router'
-import { onMounted } from 'vue'
+import { onMounted,watch } from 'vue'
 import 'md-editor-v3/lib/style.css'
 import 'katex/dist/katex.min.css'
 import 'highlight.js/styles/github.css'
 import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
 
-const text = ref(`# 欢迎使用在线 Markdown 编辑器
+const props = defineProps({
+  title: {
+    type: String,
+    default: 'Markdown Editor'
+  },
+  content: {
+    type: String,
+    default: ''
+  }
+})
+
+const emit = defineEmits(['update:content'])
+
+const text = ref(props.content || `# 欢迎使用在线 Markdown 编辑器
 
 - 支持 KaTeX 公式: $E=mc^2$
 - 支持代码高亮
@@ -71,11 +84,16 @@ const fileId = ref(null)
 
 const route = useRoute()
 
-const props = defineProps({
-  title: {
-    type: String,
-    default: 'Markdown Editor'
+// 如果父组件传入 content，会在 prop 变化时同步到内部编辑器
+watch(() => props.content, (v) => {
+  if (v !== undefined && v !== null && v !== text.value) {
+    text.value = v || ''
   }
+})
+
+// 将本地 text 的变化通知父组件
+watch(text, (newText) => {
+  emit('update:content', newText)
 })
 /** 下载 Markdown */
 const downloadMd = () => {
@@ -147,7 +165,8 @@ onMounted(() => {
   fileName.value = route.query.name
   fileId.value = route.query.id
 
-  if (fileName.value && fileId.value) {
+  // 如果没有通过 props 提供内容，则尝试通过 route id 加载
+  if (!props.content && fileName.value && fileId.value) {
     loadFromBackend()
   }
 })

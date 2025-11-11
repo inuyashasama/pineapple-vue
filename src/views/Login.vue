@@ -1,10 +1,6 @@
 <template>
   <div class="auth-container">
     <el-card class="auth-form" shadow="hover">
-      <template #header>
-        <h2>登录</h2>
-      </template>
-
       <el-form
         :model="form"
         :rules="rules"
@@ -96,7 +92,7 @@ const onSubmit = async () => {
       ElMessage.success('登录成功！')
       LocalStorageUtil.setWithExpire('username', form.value.username, 3 * 60 * 60 * 1000)
       LocalStorageUtil.setWithExpire('userId', res.id, 3 * 60 * 60 * 1000)
-
+      document.title = 'pineapple'
       await router.push('/')
     } catch (err) {
       // 错误已在拦截器中处理
@@ -113,7 +109,7 @@ const onReset = () => {
 
 // 页面挂载后设置标题
 onMounted(() => {
-  document.title = '登录'
+  document.title = '登录 - pineapple'
   // 读取临时存储的数据
   const tempCredentials = LocalStorageUtil.get('tempCredentials')
   if (tempCredentials) {
