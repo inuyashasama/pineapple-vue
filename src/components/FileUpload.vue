@@ -110,80 +110,137 @@ import { BASE_URL } from '../config/config';
 export default {
     name: "ImageUploader",
     components: { Plus, VueEasyLightbox },
+    props: {
+        initialUrl: { type: String, default: '' },
+        maxSizeMB: { type: Number, default: 5 },
+        accept: { type: String, default: 'image/*' }
+    },
+    emits: ['uploaded','aboutToUpload','removed'],
     setup(props, { emit }) {
-        let progress = ref(0);
-        let isLightBoxVisible = ref(false);
-        let isProgressVisible = ref(false);
-        let isSuccessLabelVisible = ref(false);
-        let imageUrl = ref("");
-        let localImageUrl = ref("");
-        let index = ref(0);
+        // state
+        const progress = ref(0);
+        const isLightBoxVisible = ref(false);
+        const isProgressVisible = ref(false);
+        const isSuccessLabelVisible = ref(false);
+        const isUploading = ref(false);
+        const imageUrl = ref<string>(props.initialUrl || '');
+        const localImageUrl = ref<string>(props.initialUrl || '');
+        const index = ref(0);
+        const isDragOver = ref(false);
 
-        let isThumbnailVisible = computed(() => localImageUrl.value.length > 0);
+        const isThumbnailVisible = computed(() => !!localImageUrl.value && localImageUrl.value.length > 0);
+
+        // validate file size and type
+        const validateFile = (file: File) => {
+            const maxBytes = props.maxSizeMB * 1024 * 1024;
+            if (file.size > maxBytes) {
+                ElMessage.warning(`文件大小不能超过 ${props.maxSizeMB} MB`);
+                return false;
+            }
+            if (props.accept && props.accept !== '*' && file.type && !file.type.startsWith(props.accept.split('/')[0])) {
+                // basic type check
+            }
+            return true;
+        }
 
         const openFileDialog = () => {
-            const fileInput = document.getElementById("file-input");
-            if (fileInput) {
-                fileInput.click();
-            }
+            const fileInput = document.getElementById("file-input") as HTMLInputElement | null;
+            fileInput?.click();
         }
 
-        const onImageAdded = () => {
-            let fileInput = document.getElementById("file-input") as HTMLInputElement;
-            if (!fileInput.files || fileInput.files.length == 0) {
-                return;
-            }
+        const onImageAdded = async (e?: Event) => {
+            const fileInput = document.getElementById("file-input") as HTMLInputElement | null;
+            const files = fileInput?.files;
+            if (!files || files.length === 0) return;
+            const file = files[0];
 
-            emit("aboutToUpload");
-            let file = fileInput.files[0];
-            setImageUrl(URL.createObjectURL(file));
-            upload(file);
+            if (!validateFile(file)) return;
+
+            emit('aboutToUpload');
+            setLocalPreview(URL.createObjectURL(file));
+            await upload(file);
         }
 
-        const setImageUrl = (url) => {
-            let thumbnailEl = document.getElementById("thumbnail") as HTMLImageElement;
-            thumbnailEl.src = localImageUrl.value = url;
+        const setLocalPreview = (url: string) => {
+            localImageUrl.value = url;
+            const thumbnailEl = document.getElementById('thumbnail') as HTMLImageElement | null;
+            if (thumbnailEl) thumbnailEl.src = url;
         }
 
-        const handleThumbnailRemove = (file) => {
-            imageUrl.value = "";
-            localImageUrl.value = "";
-        }
-
-        const handleThumbnailPreview = () => {
-            isLightBoxVisible.value = true;
-        }
-
-        const handleLightboxHide = () => {
-            isLightBoxVisible.value = false;
-        }
-
-        const upload = (file) => {
-            progress.value = 0;
-            isProgressVisible.value = true;
+        const clearPreview = () => {
+            imageUrl.value = '';
+            localImageUrl.value = '';
             isSuccessLabelVisible.value = false;
+            progress.value = 0;
+            emit('removed');
+        }
 
-            uploadAvatar(file).then(
-                (res) => {
-                    progress.value = 100;
-                    const url = BASE_URL + (res as any);
-                    imageUrl.value = url;
-                    const thumbnailEl = document.getElementById("thumbnail") as HTMLImageElement | null;
-                    if (thumbnailEl) {
-                        thumbnailEl.src = url;
-                    }
-                    setTimeout(() => {
-                        isProgressVisible.value = false;
-                        isSuccessLabelVisible.value = true;
-                    }, 200);
-                    emit("uploaded", url);
-                },
-                () => {
-                    isProgressVisible.value = false;
-                    localImageUrl.value = "";
-                    ElMessage.error("哎呀，图片上传出错啦~")
-                }
-            );
+        const handleThumbnailPreview = () => { isLightBoxVisible.value = true }
+        const handleLightboxHide = () => { isLightBoxVisible.value = false }
+
+        // helper to parse upload response into a usable URL
+        const resolveUploadUrl = (res: any) => {
+            const candidate = res?.url || res?.data?.url || res?.data || res;
+            if (!candidate) return '';
+            let s = typeof candidate === 'string' ? candidate : JSON.stringify(candidate);
+            if (s.startsWith('http')) return s;
+            // join with BASE_URL
+            return BASE_URL.replace(/\/$/, '') + '/' + s.replace(/^\//, '');
+        }
+
+        // simulate progress until real completion
+        let progressTimer: any = null;
+        const startFakeProgress = () => {
+            progress.value = 5;
+            isProgressVisible.value = true;
+            progressTimer = setInterval(() => {
+                if (progress.value < 90) progress.value += Math.random() * 6
+                else clearInterval(progressTimer)
+            }, 300)
+        }
+        const stopFakeProgress = () => { if (progressTimer) { clearInterval(progressTimer); progressTimer = null } }
+
+        const upload = async (file: File) => {
+            try {
+                isUploading.value = true;
+                isSuccessLabelVisible.value = false;
+                startFakeProgress();
+
+                const res = await uploadAvatar(file)
+                stopFakeProgress();
+                progress.value = 100;
+                const url = resolveUploadUrl(res)
+                imageUrl.value = url
+                // update DOM img if present
+                const thumbnailEl = document.getElementById('thumbnail') as HTMLImageElement | null;
+                if (thumbnailEl && url) thumbnailEl.src = url
+
+                // small delay to show full progress
+                await new Promise(r => setTimeout(r, 180))
+                isProgressVisible.value = false
+                isSuccessLabelVisible.value = true
+                emit('uploaded', url)
+            } catch (err) {
+                stopFakeProgress()
+                isProgressVisible.value = false
+                localImageUrl.value = ''
+                ElMessage.error('哎呀，图片上传出错啦~')
+            } finally {
+                isUploading.value = false
+            }
+        }
+
+        // drag & drop handlers
+        const onDragOver = (e: DragEvent) => { e.preventDefault(); isDragOver.value = true }
+        const onDragLeave = (e: DragEvent) => { e.preventDefault(); isDragOver.value = false }
+        const onDrop = async (e: DragEvent) => {
+            e.preventDefault(); isDragOver.value = false
+            const f = e.dataTransfer?.files?.[0]
+            if (!f) return
+            if (!validateFile(f)) return
+            setLocalPreview(URL.createObjectURL(f))
+            emit('aboutToUpload')
+            await upload(f)
         }
 
         return {
@@ -195,12 +252,17 @@ export default {
             isThumbnailVisible,
             isProgressVisible,
             isSuccessLabelVisible,
-            handleThumbnailRemove,
+            isUploading,
+            isDragOver,
+            handleThumbnailRemove: clearPreview,
             handleThumbnailPreview,
             handleLightboxHide,
             openFileDialog,
             onImageAdded,
-            setImageUrl,
+            setImageUrl: setLocalPreview,
+            onDragOver,
+            onDrop,
+            onDragLeave
         };
     },
 };
