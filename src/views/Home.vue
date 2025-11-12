@@ -295,8 +295,8 @@ const loadArticles = async (page = 1) => {
     if (searchQuery.value) params.q = searchQuery.value
     if (selectedTag.value && selectedTag.value !== '全部') params.tag = selectedTag.value
     if (selectedCategory.value && selectedCategory.value !== '全部') params.category = selectedCategory.value
-
-    const data = await getArticles(page, pageSize.value, params) as any
+    const userId = LocalStorageUtil.get('userId')
+    const data = await getArticles(page, pageSize.value, userId) as any
     articles.value = data.records
     total.value = data.total
     currentPage.value = page

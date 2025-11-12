@@ -205,7 +205,6 @@ export default {
                 isUploading.value = true;
                 isSuccessLabelVisible.value = false;
                 startFakeProgress();
-
                 const res = await uploadAvatar(file)
                 stopFakeProgress();
                 progress.value = 100;
