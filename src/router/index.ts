@@ -15,14 +15,19 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/views/Home.vue"),
       },
       {
-        path: "documents",
-        name: "Documents",
+        path: "documents/:id?",
+        name: "DocumentEditor",
         component: () => import("@/views/DocumentEditor.vue"),
       },
       {
         path: "outFitDesigner",
         name: "OutFitDesigner",
         component: () => import("@/views/OutfitDesigner.vue"),
+      },
+      {
+        path: "ai",
+        name: "AIChat",
+        component: () => import("@/views/AIChat.vue"),
       },
       {
         path: "profile",

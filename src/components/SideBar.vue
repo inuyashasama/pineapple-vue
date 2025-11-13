@@ -24,16 +24,26 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { computed } from "vue";
+import { LocalStorageUtil } from "@/stroage/LocalStorageUtil";
 
 defineProps<{ collapsed: boolean }>();
 
 const router = useRouter();
-const menu = computed(() => [
-  { path: "/", title: "首页", icon: "icon-home" },
-  { path: "/documents", title: "文章创作", icon: "icon-edit" },
-  { path: "/outFitDesigner", title: "搭配设计", icon: "icon-edit" },
-  { path: "/diary", title: "日记", icon: "icon-edit" },
-]);
+const menu = computed(() => {
+  const baseMenu = [
+    { path: "/", title: "首页", icon: "icon-home" },
+    { path: "/outFitDesigner", title: "搭配设计", icon: "icon-edit" },
+    { path: "/diary", title: "日记中心", icon: "icon-edit" },
+    { path: "/ai", title: "AI 助手", icon: "icon-robot" },
+  ];
+  const userName = LocalStorageUtil.get("username");
+  // 只有管理员才显示搭配设计页面
+  if (userName !== "admin") {
+    return baseMenu.filter(item => item.path !== "/outFitDesigner");
+  }
+  
+  return baseMenu;
+});
 
 const go = (path: string) => {
   router.push(path);

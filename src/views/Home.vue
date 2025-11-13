@@ -323,8 +323,9 @@ const goToDetail = (name: string, id: number | undefined, filetype: string | und
     return
   }
   router.push({
-    name: 'Documents',
-    query: { name: name, id: id, filetype: filetype }
+    name: 'DocumentEditor',
+    params: { id: id },
+    query: { name: name, filetype: filetype }
   })
 }
 

@@ -285,7 +285,8 @@ const selectMonth = (monthKey?: string) => {
 // 获取日记列表
 const loadDiaryEntries = async () => {
     try {
-        const data = await getDiaryEntries() as any
+        const userId = LocalStorageUtil.get('userId')
+        const data = await getDiaryEntries(1,10,userId) as any
         diaryEntries.value = data.records.filter((entry: Article) => entry.filetype === 'diary') as DiaryEntry[]
         // 提取标签列表
         const s = new Set<string>()

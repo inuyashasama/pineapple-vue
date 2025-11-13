@@ -4,9 +4,8 @@
     <header class="editor-toolbar">
       <div class="toolbar-inner">
         <div class="toolbar-left">
-          <h1 class="editor-title">文档编辑器</h1>
+          <h1 class="editor-title">文件名</h1>
           <el-input v-model="fileName" placeholder="文件名" size="small" class="file-name" />
-
           <el-select v-model="documentType" placeholder="文档类型" size="small" @change="onDocumentTypeChange"
             class="doc-type-select">
             <el-option label="Markdown" value="md"></el-option>
@@ -20,7 +19,9 @@
           <el-button type="primary" size="small" :loading="isSaving" @click="saveDocument">
             <i class="el-icon-check" /> 保存 (Ctrl+S)
           </el-button>
-          <el-button size="small" @click="previewVisible = true"><i class="el-icon-view" /> 预览</el-button>
+          <el-button type="primary" size="small" @click="goBack" title="返回">
+            <i class="el-icon-arrow-left" /> 返回
+          </el-button>
         </div>
       </div>
     </header>
@@ -79,7 +80,7 @@
 
 <script setup lang="ts">
 import { ref, computed, shallowRef, onMounted, onBeforeUnmount } from 'vue';
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { uploadAvatar } from '@/api/upload'
 import { getArticle, updateArticle, createArticle } from '@/api/article'
@@ -92,6 +93,7 @@ import TextEditor from '@/components/TextEditor.vue';
 import DocxEditor from '@/components/DocxEditor.vue';
 import { BASE_URL } from '@/config/config';
 import { Article } from '@/types/article';
+import { LocalStorageUtil } from '@/stroage/LocalStorageUtil';
 
 const documentType = ref('md');
 const fileName = ref('');
@@ -101,22 +103,32 @@ const lastSavedTime = ref('')
 const lastSavedContent = ref('')
 const previewVisible = ref(false)
 
-const coverImage = ref < string | null > (null)
-const coverInput = ref < HTMLInputElement | null > (null)
+const coverImage = ref<string | null>(null)
+const coverInput = ref<HTMLInputElement | null>(null)
 
-const tags = ref < string[] > ([])
+const tags = ref<string[]>([])
 const tagInput = ref('')
 let keyHandler: ((e: KeyboardEvent) => void) | null = null
 const route = useRoute();
+const router = useRouter();
 
 // 解析 route.query.id 为 number，兼容 string | string[] | undefined
 const articleId = computed<number | undefined>(() => {
-  const v = route.query.id
-  if (!v) return undefined
-  if (Array.isArray(v)) return Number(v[0]) || undefined
-  const n = Number(v as string)
+  // 支持从 route.params.id 或 route.query.id 读取（兼容两种跳转方式）
+  let raw: any = route.params.id ?? route.query.id
+  if (raw === undefined || raw === null) return undefined
+  if (Array.isArray(raw)) raw = raw[0]
+  // 如果 params 直接是数字（某些情况会这样），直接返回
+  if (typeof raw === 'number') return raw
+  const n = Number(raw as string)
   return Number.isNaN(n) ? undefined : n
 })
+
+const goBack = () => {
+  // 优先返回上一页，否则回到首页
+  if (window.history.length > 1) router.back()
+  else router.push({ name: 'Home' })
+}
 
 // 使用 shallowRef 避免深层响应式转换
 const currentEditorComponent = shallowRef(MarkdownEditor);
@@ -164,6 +176,7 @@ const saveDocument = async () => {
     // 如果有 articleId -> update，否则 create
     const payload = {
       id: articleId.value,
+      userId: LocalStorageUtil.get('userId'),
       title: fileName.value,
       content: documentContent.value,
       filetype: documentType.value,
@@ -215,7 +228,7 @@ onMounted(async () => {
   window.addEventListener('keydown', keyHandler)
 
   if (articleId.value) {
-  const res = await getArticle(articleId.value) as unknown as Article
+    const res = await getArticle(articleId.value) as unknown as Article
     // 填充基本字段到编辑器
     fileName.value = res.title || fileName.value
     documentContent.value = res.content || documentContent.value
