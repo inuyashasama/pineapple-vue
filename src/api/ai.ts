@@ -7,14 +7,14 @@ import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
  * - 优先按你提供的后端实现调用 `POST ${BASE_URL}/chat`，以 form 参数 `message` 传入内容，返回纯文本字符串。
  * - 若该请求失败（或后端采用不同实现），回退到项目原先的 `request.post('/api/ai/chat', payload)`。
  */
-export async function aiChat(messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>, opts?: { model?: string; temperature?: number }) {
+export async function aiChat(messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>, model:string,opts?: { model?: string; temperature?: number }) {
   const userContents = messages.filter(m => m.role === 'user').map(m => m.content).join('\n')
   const message = userContents || (messages[0] && messages[0].content) || ''
 
   try {
     const url = (BASE_URL || '') + '/api/ai/chat'
     const userId = LocalStorageUtil.get('userId') || ''
-    const body = new URLSearchParams({ message, userId })
+    const body = new URLSearchParams({ message, userId, model })
     const token = LocalStorageUtil.get('token')
     const headers: Record<string, string> = { Accept: 'text/plain, */*' }
     if (token) headers.Authorization = `Bearer ${token}`
@@ -62,13 +62,13 @@ export async function aiQuery(prompt: string, opts?: { model?: string }) {
  * 流式接口：后端提供 GET /chat/stream?message=... 返回 Flux<String>
  * 返回 { stream: AsyncGenerator<string>, abort: () => void }
  */
-export function aiChatStream(messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>, opts?: { model?: string; temperature?: number }) {
+export function aiChatStream(messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>, model:string) {
   const controller = new AbortController()
   const userContents = messages.filter(m => m.role === 'user').map(m => m.content).join('\n')
   const message = userContents || (messages[0] && messages[0].content) || ''
   const encoded = encodeURIComponent(message)
   const userId = LocalStorageUtil.get('userId') || ''
-  const url = (BASE_URL || '') + `/api/ai/chat/stream?message=${encoded}&userId=${encodeURIComponent(userId)}`
+  const url = (BASE_URL || '') + `/api/ai/chat/stream?message=${encoded}&userId=${encodeURIComponent(userId)}&model=${encodeURIComponent(model)}`
 
   async function* streamGenerator() {
     const token = LocalStorageUtil.get('token')
@@ -95,6 +95,12 @@ export function aiChatStream(messages: Array<{ role: 'user' | 'assistant' | 'sys
   }
 
   return { stream: streamGenerator(), abort: () => controller.abort() }
+}
+
+export const text2Video = (prompt: string,model:string) => {
+  const userId = LocalStorageUtil.get('userId') || ''
+  const aiParamVO = { prompt, userId, model }
+  return request.post('/api/ai/text2video', aiParamVO)
 }
 
 // mock

@@ -8,4 +8,4 @@ export const BASE_URL = ENV.VITE_BASE_API;
 export const API_URL = ENV.VITE_BASE_API + "/api";
 
 /** 超时时间 */
-export const TIMEOUT = 6000;
+export const TIMEOUT = 600000;

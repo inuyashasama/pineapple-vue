@@ -7,7 +7,7 @@
                     <div class="subtitle">写作、查询、润色与问答 · 智能辅助</div>
                 </div>
                 <div class="ai-actions">
-                    <el-tag type="success" size="small">模式: {{ aiMode }}</el-tag>
+                    <el-tag type="success" size="small">模式: {{ modeLabel }}</el-tag>
                     <el-select v-model="aiModel" size="small" style="margin-left: 5px; width: 140px;"
                         @change="onModelChange">
                         <el-option v-for="model in availableModels" :key="model.value" :label="model.label"
@@ -38,6 +38,15 @@
                                 : 'AI') }}</div>
                             <div class="bubble-wrap">
                                 <div class="bubble" v-html="formatContent(m.content)"></div>
+                                <!-- 视频播放器 -->
+                                <div v-if="m.videoUrl" class="video-container">
+                                    <video :src="m.videoUrl" controls
+                                        style="width: 100%; height: auto; margin-top: 10px;" crossorigin="anonymous"
+                                        @error="onVideoError"></video>
+                                    <div class="video-actions">
+                                        <el-button size="small" @click="openInNewTab(m.videoUrl)">在新标签页打开</el-button>
+                                    </div>
+                                </div>
                                 <div class="meta">
                                     <span class="time">{{ m.time }}</span>
                                 </div>
@@ -60,20 +69,30 @@
             </div>
         </el-card>
     </div>
+    <el-dialog v-model:visible="videoDialogVisible" width="70%" title="播放视频" @close="closeVideoDialog">
+        <div style="min-height:240px;">
+            <div style="margin-bottom:8px; display:flex; gap:8px;">
+                <el-button size="small" type="primary" @click="openInNewTab(currentVideoUrl)">在新标签页打开</el-button>
+                <el-button size="small" @click="fetchAndPlay(currentVideoUrl)">尝试下载并播放（fetch）</el-button>
+            </div>
+            <video v-if="currentVideoUrl" :src="currentVideoUrl" controls style="width:100%; height:auto"
+                crossorigin="anonymous" @error="onVideoError"></video>
+            <div v-else>未找到视频地址</div>
+        </div>
+    </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import ai, { aiChatStream } from '@/api/ai'
-import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
+import ai, { aiChatStream, text2Video } from '@/api/ai'
 
-type Msg = { role: 'user' | 'assistant' | 'system'; content: string; time?: string }
+type Msg = { role: 'user' | 'assistant' | 'system'; content: string; time?: string; videoUrl?: string }
 
 const messages = ref<Msg[]>([])
 const input = ref('')
 const sending = ref(false)
-const aiMode = ref<'chat' | 'query'>('chat')
+const aiMode = ref<'chat' | 'query' | 'video'>('chat')
 const aiModel = ref('qwen-turbo')
 const chatBody = ref<HTMLElement | null>(null)
 const streaming = ref(false)
@@ -85,41 +104,17 @@ const quickPrompts = ref<string[]>([
     '请给出改进建议',
 ])
 
-// Usage limit settings
-const USAGE_LIMIT_PER_DAY = 10 // 非 admin 每日调用上限，可调整
-const username = LocalStorageUtil.get('username') || 'guest'
-const isAdmin = username === 'admin'
 const availableModels = [
-  { label: '通义千问 Turbo', value: 'qwen-turbo' },
-  { label: '通义千问 Plus', value: 'qwen-plus' },
-  { label: '通义千问 Max', value: 'qwen-max' },
-  // 可以根据需要添加更多模型
+    { label: '通义千问 Turbo', value: 'qwen-turbo' },
+    { label: '通义千问 Plus', value: 'qwen-plus' },
+    { label: '通义千问 Max', value: 'qwen-max' },
+    // 可以根据需要添加更多模型
 ]
 
 // 添加模型变更处理函数
 const onModelChange = (newModel: string) => {
-  ElMessage.success(`已切换至 ${availableModels.find(m => m.value === newModel)?.label || newModel} 模型`)
-  // 可以在这里添加保存用户选择的逻辑
-}
-const usageKey = () => {
-    const d = new Date()
-    const day = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`
-    return `ai_usage_${username}_${day}`
-}
-
-const getUsage = () => {
-    const v = LocalStorageUtil.get(usageKey())
-    return typeof v === 'number' ? v : (v ? Number(v) : 0)
-}
-
-const setUsage = (n: number) => {
-    LocalStorageUtil.set(usageKey(), n)
-}
-
-const incrementUsage = () => {
-    if (isAdmin) return
-    const c = getUsage()
-    setUsage(c + 1)
+    ElMessage.success(`已切换至 ${availableModels.find(m => m.value === newModel)?.label || newModel} 模型`)
+    // 可以在这里添加保存用户选择的逻辑
 }
 
 
@@ -143,7 +138,7 @@ const onSend = async () => {
         if (aiMode.value === 'chat') {
             // 尝试使用流式接口
             try {
-                const { stream, abort } = aiChatStream(messages.value)
+                const { stream, abort } = aiChatStream(messages.value, aiModel.value)
                 abortFn.value = abort
                 streaming.value = true
                 // 预先插入一个空的 assistant 消息，用于逐块填充
@@ -155,17 +150,25 @@ const onSend = async () => {
                 }
                 // 流读完毕
                 messages.value[idx].time = new Date().toLocaleTimeString()
-                // 计数：流式完成时增加一次使用计数（非 admin）
-                incrementUsage()
                 abortFn.value = null
                 streaming.value = false
             } catch (streamErr) {
                 // 如果流式失败，回退到普通请求
                 console.warn('ai stream failed, fallback to non-stream', streamErr)
-                const res: any = await ai.aiChat(messages.value)
+                const res: any = await ai.aiChat(messages.value, aiModel.value)
                 const reply = res?.data?.reply || res?.reply || (typeof res === 'string' ? res : res?.data)
                 if (reply) pushAssistantReply(String(reply))
                 else throw new Error('后端未返回 reply 字段')
+            }
+        } else if (aiMode.value === 'video') {
+            // 调用文生视频接口，后端应返回视频 URL
+            const res: any = await text2Video(t, aiModel.value)
+            // 解析常见返回结构
+            const videoUrl = res?.url || res?.data?.url || res?.videoUrl || (typeof res === 'string' ? res : res?.data)
+            if (videoUrl) {
+                pushAssistantReply('已生成视频，点击播放', String(videoUrl))
+            } else {
+                ElMessage.error('未获取到视频地址')
             }
         } else {
             const res: any = await ai.aiQuery(t)
@@ -206,8 +209,83 @@ const handleEnter = (e: KeyboardEvent) => {
 }
 
 const clearMessages = () => { messages.value = [] }
-const toggleAiQueryMode = () => { aiMode.value = aiMode.value === 'chat' ? 'query' : 'chat' }
+// 添加计算属性处理模式标签显示
+const modeLabel = computed(() => {
+    switch (aiMode.value) {
+        case 'chat': return '对话'
+        case 'query': return '查询'
+        case 'video': return '文生视频'
+        default: return '对话'
+    }
+})
 
+const toggleAiQueryMode = () => {
+    if (aiMode.value === 'chat') {
+        aiMode.value = 'query'
+    } else if (aiMode.value === 'query') {
+        aiMode.value = 'video'
+    } else {
+        aiMode.value = 'chat'
+    }
+}
+
+// 视频播放对话框状态与打开函数
+const videoDialogVisible = ref(false)
+const currentVideoUrl = ref<string | null>(null)
+
+// 支持在新标签页打开或尝试 fetch->blob 回退（用于绕过部分跨域/签名问题）
+const _blobUrlRef = ref<string | null>(null)
+const openInNewTab = (url?: string | null) => {
+    if (!url) {
+        ElMessage.error('无视频地址可打开')
+        return
+    }
+    try {
+        window.open(url, '_blank')
+    } catch (e) {
+        console.warn('openInNewTab failed', e)
+        ElMessage.error('无法在新标签页打开')
+    }
+}
+
+const fetchAndPlay = async (url?: string | null) => {
+    if (!url) {
+        ElMessage.error('无视频地址可下载')
+        return
+    }
+    try {
+        ElMessage.info('开始下载视频（可能较大）')
+        const resp = await fetch(url, { mode: 'cors' })
+        if (!resp.ok) {
+            ElMessage.error(`下载失败：${resp.status}`)
+            console.warn('fetch failed', resp)
+            return
+        }
+        const blob = await resp.blob()
+        const obj = URL.createObjectURL(blob)
+        if (_blobUrlRef.value) URL.revokeObjectURL(_blobUrlRef.value)
+        _blobUrlRef.value = obj
+        currentVideoUrl.value = obj
+        videoDialogVisible.value = true
+        ElMessage.success('下载完成，开始播放')
+    } catch (e: any) {
+        console.error('fetchAndPlay error', e)
+        ElMessage.error('下载或播放失败（可能被跨域阻止）')
+    }
+}
+
+const onVideoError = (ev?: any) => {
+    ElMessage.error('视频加载失败，尝试在新标签页打开或检查跨域策略')
+}
+
+const closeVideoDialog = () => {
+    currentVideoUrl.value = null
+    videoDialogVisible.value = false
+    if (_blobUrlRef.value) {
+        try { URL.revokeObjectURL(_blobUrlRef.value) } catch (e) { console.warn(e) }
+        _blobUrlRef.value = null
+    }
+}
 const applyPromptAndSend = async (p: string) => {
     input.value = p
     await nextTick()
@@ -215,21 +293,19 @@ const applyPromptAndSend = async (p: string) => {
 }
 
 // Helper to push assistant replies with simple deduplication to avoid double-posts
-const pushAssistantReply = (text: string) => {
+const pushAssistantReply = (text: string, videoUrl?: string) => {
     const now = new Date().toLocaleTimeString()
     // find last assistant message
     for (let i = messages.value.length - 1; i >= 0; i--) {
         if (messages.value[i].role === 'assistant') {
-            if (messages.value[i].content === text) {
+            if (messages.value[i].content === text && messages.value[i].videoUrl === (videoUrl || undefined)) {
                 // identical to last assistant message, skip
                 return
             }
             break
         }
     }
-    messages.value.push({ role: 'assistant', content: text, time: now })
-    // increment usage for non-admins when pushing a completed assistant reply
-    incrementUsage()
+    messages.value.push({ role: 'assistant', content: text, time: now, videoUrl: videoUrl })
 }
 
 onMounted(() => {
@@ -354,6 +430,30 @@ const formatContent = (text: string) => {
     max-width: calc(100% - 64px)
 }
 
+.bubble-wrap {
+    position: relative
+}
+
+.video-thumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #fafafa;
+    border: 1px solid #eef2f6;
+    cursor: pointer;
+    color: #2b6cb0;
+    width: fit-content;
+    user-select: none;
+    z-index: 2;
+}
+
+.video-thumb:hover {
+    background: #f0f7ff
+}
+
 .bubble {
     padding: 12px 14px;
     border-radius: 12px;
@@ -425,5 +525,18 @@ const formatContent = (text: string) => {
     .ai-side {
         width: 100%
     }
+}
+
+.video-container {
+    margin-top: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #eef2f6;
+}
+
+.video-actions {
+    padding: 8px;
+    background: #f8f9fa;
+    border-top: 1px solid #eef2f6;
 }
 </style>
