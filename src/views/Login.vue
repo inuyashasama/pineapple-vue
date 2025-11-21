@@ -1,14 +1,25 @@
 <template>
   <div class="auth-container">
-    <el-card class="auth-form" shadow="hover">
+    <el-card class="auth-form" shadow="always">
+      <div class="form-header">
+        <h2>欢迎登录</h2>
+        <p>pineapple 管理系统</p>
+      </div>
+      
       <el-form
         :model="form"
         :rules="rules"
         ref="formRef"
-        label-width="80px"
+        label-position="top"
+        class="login-form"
       >
         <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" placeholder="请输入用户名" />
+          <el-input 
+            v-model="form.username" 
+            placeholder="请输入用户名"
+            size="large"
+            clearable
+          />
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
@@ -17,15 +28,26 @@
             type="password"
             placeholder="请输入密码"
             show-password
+            size="large"
           />
         </el-form-item>
 
-        <el-form-item>
-          <el-button type="primary" @click="onSubmit" :loading="loading">
-            登录
+        <el-form-item class="button-group">
+        <div class="button-wrapper">
+          <el-button 
+            type="primary" 
+            @click="onSubmit" 
+            :loading="loading"
+            size="large"
+            class="submit-btn"
+          >
+            {{ loading ? '登录中...' : '登录' }}
           </el-button>
-          <el-button @click="onReset">重置</el-button>
-        </el-form-item>
+          <el-button @click="onReset" size="large" class="reset-btn">
+            重置
+          </el-button>
+        </div>
+      </el-form-item>
 
         <div class="link">
           没有账号？
@@ -130,23 +152,113 @@ onMounted(() => {
   align-items: center;
   min-height: 100vh;
   background-image: url(../assets/bg.jpg);
-  background-size: cover;        /* 覆盖整个容器 */
-  background-position: center;   /* 居中显示 */
-  background-repeat: no-repeat;  /* 不重复 */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 20px;
 }
 
 .auth-form {
-  width: 400px;
-  padding: 20px;
+  width: 100%;
+  max-width: 420px;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.form-header h2 {
+  font-size: 24px;
+  color: #303133;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.form-header p {
+  color: #909399;
+  font-size: 14px;
+}
+
+.login-form :deep(.el-form-item) {
+  margin-bottom: 22px;
+}
+
+.login-form :deep(.el-form-item__label) {
+  font-weight: 500;
+  color: #606266;
+}
+
+.login-form :deep(.el-input__inner) {
+  border-radius: 8px;
+  padding: 12px 15px;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.login-form :deep(.el-input__inner:hover) {
+  border-color: #409eff;
+}
+
+.login-form :deep(.el-input__inner:focus) {
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+}
+
+.button-group {
+  margin-top: 30px !important;
+  margin-bottom: 20px !important;
+}
+
+.button-wrapper {
+  display: flex;
+  gap: 15px;
+  width: 100%;
+}
+
+.submit-btn {
+  flex: 1;
+  border-radius: 8px;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.reset-btn {
+  flex: 1;
+  border-radius: 8px;
 }
 
 .link {
   text-align: center;
   color: #606266;
+  font-size: 14px;
 }
 
 .link a {
   color: #409eff;
   text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.link a:hover {
+  color: #66b1ff;
+  text-decoration: underline;
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .auth-form {
+    padding: 20px;
+    margin: 10px;
+  }
+  
+  .form-header h2 {
+    font-size: 22px;
+  }
 }
 </style>
