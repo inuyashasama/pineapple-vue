@@ -30,6 +30,11 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("@/views/AIChat.vue"),
       },
       {
+        path: "treasure",
+        name: "TreasureCabinet",
+        component: () => import('@/views/TreasureCabinet.vue'),
+      },
+      {
         path: "profile",
         name: "profile",
         component: () => import("@/views/ProfileCenter.vue"),

@@ -8,11 +8,7 @@
                 </div>
                 <div class="ai-actions">
                     <el-tag type="success" size="small">模式: {{ modeLabel }}</el-tag>
-                    <el-select v-model="aiModel" size="small" style="margin-left: 5px; width: 140px;"
-                        @change="onModelChange">
-                        <el-option v-for="model in availableModels" :key="model.value" :label="model.label"
-                            :value="model.value" />
-                    </el-select>
+                    <el-tag type="success" size="small" style="margin-left: 5px;">大模型: {{ aiModelLable }}</el-tag>
                     <el-button type="text" size="small" @click="clearMessages">清空</el-button>
                     <el-button v-if="streaming" type="danger" size="small" @click="stopStreaming">停止</el-button>
                 </div>
@@ -22,8 +18,7 @@
                 <aside class="ai-side">
                     <h4>快速提示</h4>
                     <div class="prompts">
-                        <el-tag v-for="(p, i) in quickPrompts" :key="i" type="info" @click="applyPromptAndSend(p)">{{ p
-                        }}</el-tag>
+                        <el-tag v-for="(p, i) in quickPrompts" :key="i" type="info" @click="applyPromptAndSend(p)">{{p}}</el-tag>
                     </div>
                     <div class="help">
                         <h5>提示</h5>
@@ -63,8 +58,13 @@
                         @keydown.enter.native="handleEnter"></el-input>
                 </div>
                 <div class="input-actions">
-                    <el-button :loading="sending" type="primary" @click="onSend">发送</el-button>
-                    <el-button @click="toggleAiQueryMode" size="small">切换模式</el-button>
+                    <div class="action-row">
+                        <el-button :loading="sending" type="primary" style="width: 170px;" @click="onSend">发送</el-button>
+                        <div class="right-buttons">
+                        <el-button @click="toggleAiQueryMode" size="small">切换模式</el-button>
+                        <el-button @click="toggleAiModel" size="small">切换大模型</el-button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </el-card>
@@ -93,7 +93,7 @@ const messages = ref<Msg[]>([])
 const input = ref('')
 const sending = ref(false)
 const aiMode = ref<'chat' | 'query' | 'video'>('chat')
-const aiModel = ref('qwen-turbo')
+const aiModel = ref<'qwen-turbo' | 'qwen-plus' | 'qwen-max'>('qwen-turbo')
 const chatBody = ref<HTMLElement | null>(null)
 const streaming = ref(false)
 const abortFn = ref<null | (() => void)>(null)
@@ -103,24 +103,6 @@ const quickPrompts = ref<string[]>([
     '把这段话翻译成英文',
     '请给出改进建议',
 ])
-
-const availableModels = [
-    { label: '通义千问 Turbo', value: 'qwen-turbo' },
-    { label: '通义千问 Plus', value: 'qwen-plus' },
-    { label: '通义千问 Max', value: 'qwen-max' },
-    // 可以根据需要添加更多模型
-]
-
-// 添加模型变更处理函数
-const onModelChange = (newModel: string) => {
-    ElMessage.success(`已切换至 ${availableModels.find(m => m.value === newModel)?.label || newModel} 模型`)
-    // 可以在这里添加保存用户选择的逻辑
-}
-
-
-const applyPrompt = (p: string) => {
-    input.value = p
-}
 
 const scrollToBottom = async () => {
     await nextTick()
@@ -226,6 +208,25 @@ const toggleAiQueryMode = () => {
         aiMode.value = 'video'
     } else {
         aiMode.value = 'chat'
+    }
+}
+
+const aiModelLable = computed(() => {
+    switch (aiModel.value) {
+        case 'qwen-turbo': return '通义千问 Turbo'
+        case 'qwen-plus': return '通义千问 Plus'
+        case 'qwen-max': return '通义千问 Max'
+        default: return '通义千问 Turbo'
+    }
+})
+
+const toggleAiModel = () => {
+    if (aiModel.value === 'qwen-turbo') {
+        aiModel.value = 'qwen-plus'
+    } else if (aiModel.value === 'qwen-plus') {
+        aiModel.value = 'qwen-max'
+    } else {
+        aiModel.value = 'qwen-turbo'
     }
 }
 
@@ -512,9 +513,20 @@ const formatContent = (text: string) => {
 }
 
 .input-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end
+  display: flex;
+  justify-content: flex-end;
+}
+
+.action-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.right-buttons {
+  display: flex;
+  gap: 8px;
 }
 
 @media (max-width: 900px) {

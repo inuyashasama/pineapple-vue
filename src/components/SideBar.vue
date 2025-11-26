@@ -35,6 +35,7 @@ const menu = computed(() => {
     { path: "/outFitDesigner", title: "搭配设计", icon: "icon-edit" },
     { path: "/diary", title: "日记中心", icon: "icon-edit" },
     { path: "/ai", title: "AI 助手", icon: "icon-robot" },
+    { path: "/treasure", title: "藏宝阁", icon: "icon-robot" },
   ];
   const userName = LocalStorageUtil.get("username");
   // 只有管理员才显示搭配设计页面
