@@ -1,3 +1,7 @@
 export * from './auth'
 export * from './user'
 export * from './article'
+export * from './point'
+export * from './commonApi'
+export * from './upload'
+export * from './treasure'

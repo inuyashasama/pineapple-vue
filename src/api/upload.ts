@@ -1,3 +1,4 @@
+import { UPLOAD_URL } from './commonApi';
 import request from './request'
 
 /**
@@ -10,7 +11,7 @@ function uploadAvatar(file: File) {
     formData.append("file", file)
 
     return request({
-        url: "/api/upload/avatar",
+        url: UPLOAD_URL,
         method: "post",
         data: formData,
     })

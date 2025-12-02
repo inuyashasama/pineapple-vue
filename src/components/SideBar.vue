@@ -38,7 +38,7 @@ const menu = computed(() => {
     { path: "/treasure", title: "藏宝阁", icon: "icon-robot" },
   ];
   const userName = LocalStorageUtil.get("username");
-  // 只有管理员才显示搭配设计页面
+  // 只有管理员才显示搭配设计页面ssis741
   if (userName !== "admin") {
     return baseMenu.filter(item => item.path !== "/outFitDesigner");
   }

@@ -7,9 +7,10 @@ import 'element-plus/dist/index.css';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 // 路由
 import router from './router';
-
+import permission from './directives/permission';
 
 const app = createApp(App);
 app.use(ElementPlus, { locale: zhCn });
+app.directive('permission', permission)
 app.use(router);
 app.mount('#app');

@@ -46,10 +46,11 @@ import { User } from '@/types'
 import { register } from '@/api/auth'
 import FileUpload from '@/components/FileUpload.vue'
 import { LocalStorageUtil } from '@/stroage/LocalStorageUtil'
+import { UPLOAD_URL } from '@/api/commonApi'
 
 const router = useRouter()
 const formRef = ref<FormInstance>()
-const actionUrl = ref('/api/upload/avatar');
+const actionUrl = ref(UPLOAD_URL);
 
 const form = ref<User>({
   username: '',

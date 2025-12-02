@@ -1,25 +1,11 @@
 
-export type TreasureItem = {
-  id: string
-  name: string
-  userId: string
-  purchaseDate: string // ISO date
-  price: number
-  usefulLifeYears: number
-  notes?: string
-  imageUrl?: string
-  // 折旧相关
-  depreciationMethod?:'straight' | 'accelerated' | 'usage' | 'none'
-  residualPercent?: number // 直线折旧残值百分比（0-100）
-  totalUsageHours?: number // 使用量折旧：预计总使用小时
-  usedHours?: number // 已使用小时
-  totalUsageLimit?: number;
-  currentUsage?: number;
-}
+
 
 
 import request from '@/api/request'
 import { BASE_URL } from '@/config/config'
+import { TreasureItem } from '@/types/treasureItem'
+import { UPLOAD_URL } from './commonApi'
 
 export default {
 
@@ -60,7 +46,7 @@ export default {
     try {
       const form = new FormData()
       form.append('file', file)
-      const res: any = await request.post('/api/upload/avatar', form)
+      const res: any = await request.post(UPLOAD_URL, form)
       return BASE_URL + res
     } catch (e) {
       console.warn('uploadImage to server failed, fallback to base64', e)
